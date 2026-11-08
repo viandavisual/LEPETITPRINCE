@@ -144,3 +144,27 @@ button:active{transform:scale(.96) !important;filter:brightness(1.15)}
 .home-fox-dog img{display:block;width:clamp(240px,54vw,650px);max-width:98%;height:auto;filter:drop-shadow(0 16px 30px rgba(3,12,29,.5))}
 .stats-dog img{display:block;width:clamp(190px,37vw,410px);max-width:90%;height:auto;filter:drop-shadow(0 16px 30px rgba(3,12,29,.5))}
 @media(max-width:760px){.home-fox-dog{padding:26px 0 8px}.home-fox-dog img{width:min(90vw,490px)}.stats-dog img{width:min(80vw,310px)}}
+
+/* v14: portada inicial il·lustrada i controls de navegació */
+.home-title-art{display:block;width:min(100%,600px);height:auto;max-height:180px;object-fit:contain;object-position:left center;filter:drop-shadow(0 3px 13px #0109198a);margin:12px 0 19px}
+.home-quickgrid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+.back-header{font-size:24px;min-width:40px;height:39px;line-height:1;padding:4px 10px;display:grid;place-items:center;border-color:#d5b97865;color:#f6dfae}
+.back-header:disabled{opacity:.36;cursor:default}
+.install-header{min-height:38px;border-color:#dfc48885;color:#f5d59b;white-space:nowrap}
+.install-header:hover{background:#34486a}
+.install-dialog{width:min(440px,calc(100% - 24px))}
+.install-dialog #installHelp{padding:16px 0 22px;line-height:1.7;color:#d7e1f2}
+.topright{gap:8px}
+@media(max-width:760px){
+ .home-title-art{max-height:125px;margin:7px auto 17px;object-position:center}
+ .home-quickgrid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px}
+ .home-quickgrid .quick{padding:13px 4px;min-height:104px}
+ .home-quickgrid .quick strong{font-size:11px;overflow-wrap:anywhere}
+ .home-quickgrid .quick small{font-size:10px;line-height:1.25}
+ .home-quickgrid .quick .symbol{font-size:20px}
+ .back-header{min-width:32px;width:32px;height:36px;padding:0}
+ .install-header{width:35px;height:36px;min-height:0;padding:0;font-size:18px}
+ .install-header span{display:none}
+ .topright{gap:4px}
+}
+@media(max-width:390px){.brand strong{font-size:12px}.brand span{font-size:8px}.brand-logo{width:32px;height:32px}.music-btn,.music-next{width:31px;height:34px}}
