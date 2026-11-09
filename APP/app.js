@@ -81,43 +81,55 @@ function goBack(){
  state.languageId=prev.languageId;state.lastOpenedLanguageId=prev.languageId;
  navigate(prev.page,false);
 }
+function isInstalledPWA(){
+ return !!(window.matchMedia?.('(display-mode: standalone)').matches||window.navigator.standalone);
+}
 function installationHelp(){
  const ua=navigator.userAgent;
  const ios=/iPhone|iPad|iPod/i.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
  const android=/Android/i.test(ua);
  const edge=/Edg\//i.test(ua), chrome=/Chrome|CriOS/i.test(ua);
  const safari=/Safari/i.test(ua)&&!/Chrome|CriOS|FxiOS|Edg/i.test(ua);
- const installed=window.matchMedia?.('(display-mode: standalone)').matches||navigator.standalone;
- if(installed)return '<p><b>Ja tens l’app instal·lada!</b> Estàs utilitzant la versió independent.</p>';
- if(location.protocol==='file:')return '<p>Per instal·lar l’app, obre-la des de l’enllaç públic HTTPS de GitHub Pages. L’obertura directa de fitxers és útil per provar-la, però no permet instal·lar-la.</p>';
- if(ios)return `<p><b>iPhone / iPad</b></p><ol><li>${safari?'A Safari, toca':'Obre l’app amb Safari i toca'} el botó <b>Compartir</b>.</li><li>Selecciona <b>Afegir a la pantalla d’inici</b>.</li><li>Confirma amb <b>Afegir</b>.</li></ol>`;
- if(android)return '<p><b>Android</b></p><ol><li>Obre el menú <b>⋮</b> de Chrome o Edge.</li><li>Selecciona <b>Instal·lar aplicació</b> o <b>Afegir a la pantalla d’inici</b>.</li><li>Confirma la instal·lació.</li></ol>';
- if(edge)return '<p><b>Windows · Microsoft Edge</b></p><ol><li>Obre el menú <b>…</b>.</li><li>Entra a <b>Aplicacions → Instal·la aquest lloc com a aplicació</b>.</li><li>Confirma-ho i, si vols, fixa-la a la barra de tasques.</li></ol>';
- if(chrome)return '<p><b>Windows / Mac · Google Chrome</b></p><ol><li>Obre el menú <b>⋮</b>.</li><li>Tria <b>Emet, desa i comparteix → Instal·la la pàgina com a aplicació</b> (el nom pot variar).</li><li>Si hi ha una icona d’instal·lació a la barra d’adreces, també la pots utilitzar.</li></ol>';
- return '<p>Des del menú del navegador, busca <b>Instal·la</b>, <b>Afegir a inici</b> o <b>Instal·la aquest lloc com a aplicació</b>.</p>';
+ if(isInstalledPWA())return '<p><b>L’app ja està instal·lada.</b> La tens oberta en mode independent.</p>';
+ if(location.protocol==='file:')return '<p>Per instal·lar l’app, obre la versió pública HTTPS. Obrir un fitxer local amb doble clic no permet instal·lar-lo.</p>';
+ const directLink='<a href="./index.html" class="install-direct-link">Obrir l’adreça de l’app</a>';
+ if(ios)return `<p><b>iPhone / iPad</b></p><ol><li>${safari?'A Safari, toca':'Obre l’app a Safari i toca'} <b>Compartir</b>.</li><li>Tria <b>Afegir a la pantalla d’inici</b> i confirma-ho.</li></ol>`;
+ if(android&&chrome){return `<p><b>Android · Chrome</b></p><ol><li>Obre aquesta app a Chrome (no dins d’una altra app).</li><li>Al menú <b>⋮</b>, tria <b>Instal·lar aplicació</b> si apareix.</li><li>Confirma la instal·lació i obre-la des de la seva icona.</li></ol><p><b>Atenció:</b> si Chrome només ofereix <b>Crear drecera</b>, això no garanteix una PWA instal·lada. Prova d’obrir directament <code>/APP/index.html</code> i actualitza la pàgina. ${directLink}</p>`;}
+ if(android)return '<p>Obre aquesta pàgina a Google Chrome i busca l’opció <b>Instal·lar aplicació</b> al menú ⋮. Algunes versions del navegador només ofereixen una drecera.</p>';
+ if(edge)return '<p><b>Windows · Microsoft Edge</b></p><ol><li>Obre el menú <b>…</b>.</li><li>Selecciona <b>Aplicacions → Instal·la aquest lloc com a aplicació</b>.</li><li>Confirma i fixa-la, si vols, a la barra de tasques.</li></ol>';
+ if(chrome)return '<p><b>Google Chrome · Ordinador</b></p><ol><li>Obre el menú <b>⋮</b>.</li><li>Busca <b>Instal·la la pàgina com a aplicació</b> o la icona d’instal·lació de la barra d’adreces.</li><li>Confirma-ho.</li></ol>';
+ return '<p>Busca l’opció d’instal·lar l’app al menú del navegador. Si només apareix una drecera, el navegador podria no admetre la instal·lació nativa.</p>';
 }
 function openInstallHelp(){
- $('#installHelp').innerHTML=installationHelp()+'<p class="install-fallback">Si no apareix cap opció per instal·lar-la, pots continuar utilitzant l’app directament des del navegador.</p>';
- $('#installNative').hidden=!state.install;
- $('#installDialog').showModal();
+ const help=$('#installHelp');
+ help.innerHTML=installationHelp()+'<p class="install-fallback">Si el navegador no permet instal·lar-la, pots continuar utilitzant-la directament des del navegador.</p>';
+ const btn=$('#installNative');
+ btn.hidden=!(state.install&&!isInstalledPWA());
+ if(!$('#installDialog').open)$('#installDialog').showModal();
 }
 async function tryNativeInstall(){
- if(!state.install){openInstallHelp();return}
- const event=state.install;state.install=null;
- try{await event.prompt();const choice=await event.userChoice;if(choice?.outcome==='accepted')toast('Instal·lació iniciada');else openInstallHelp()}catch{openInstallHelp()}
+ const event=state.install;
+ if(!event){openInstallHelp();return;}
+ state.install=null;
+ try{
+  await event.prompt();
+  const choice=await event.userChoice;
+  if(choice?.outcome==='accepted')toast('Has acceptat instal·lar l’app');
+  else toast('Instal·lació cancel·lada');
+ }catch(err){console.warn('PWA install prompt:',err);openInstallHelp()}
 }
 
-function wire(){document.addEventListener('click',e=>{const t=e.target.closest('[data-view],[data-lang],[data-book],[data-mark],[data-close],[data-save],#export,#importBackup,#saveUserName');if(!t)return;if(t.dataset.view){navigate(t.dataset.view);return}if(t.dataset.lang){state.languageId=t.dataset.lang;navigate('language');return}if(t.dataset.book){showBook(t.dataset.book);return}if(t.dataset.mark){mark(t.dataset.id,t.dataset.mark);return}if('close'in t.dataset){$('#editionDialog').close();return}if(t.dataset.save){saveNote(t.dataset.save);return}if(t.id==='saveUserName'){saveProfile();return}if(t.id==='export'){exportBackup();return}if(t.id==='importBackup'){$('#backupFile').click();return}});document.addEventListener('input',e=>{if(e.target.id==='search'){const caret=e.target.selectionStart;state.search=e.target.value;render();const x=$('#search');if(x){x.focus();x.setSelectionRange(caret,caret)}}});document.addEventListener('change',async e=>{if(e.target.id==='filter'){state.filter=e.target.value;render()}if(e.target.id==='sort'){state.order=e.target.value;render()}if(e.target.id==='backupFile'){try{await importBackup(e.target.files[0])}catch(err){toast('Error: '+err.message)}e.target.value=''}});window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();state.install=e});
- window.addEventListener('appinstalled',()=>{state.install=null;toast('App instal·lada!')});
+function wire(){document.addEventListener('click',e=>{const t=e.target.closest('[data-view],[data-lang],[data-book],[data-mark],[data-close],[data-save],#export,#importBackup,#saveUserName');if(!t)return;if(t.dataset.view){navigate(t.dataset.view);return}if(t.dataset.lang){state.languageId=t.dataset.lang;navigate('language');return}if(t.dataset.book){showBook(t.dataset.book);return}if(t.dataset.mark){mark(t.dataset.id,t.dataset.mark);return}if('close'in t.dataset){$('#editionDialog').close();return}if(t.dataset.save){saveNote(t.dataset.save);return}if(t.id==='saveUserName'){saveProfile();return}if(t.id==='export'){exportBackup();return}if(t.id==='importBackup'){$('#backupFile').click();return}});document.addEventListener('input',e=>{if(e.target.id==='search'){const caret=e.target.selectionStart;state.search=e.target.value;render();const x=$('#search');if(x){x.focus();x.setSelectionRange(caret,caret)}}});document.addEventListener('change',async e=>{if(e.target.id==='filter'){state.filter=e.target.value;render()}if(e.target.id==='sort'){state.order=e.target.value;render()}if(e.target.id==='backupFile'){try{await importBackup(e.target.files[0])}catch(err){toast('Error: '+err.message)}e.target.value=''}});window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();state.install=e;if($('#installDialog')?.open)$('#installNative').hidden=false});
+ window.addEventListener('appinstalled',()=>{state.install=null;$('#install').hidden=true;if($('#installDialog')?.open)$('#installDialog').close();toast('App instal·lada!')});
  $('#headerBack').addEventListener('click',goBack);
  $('#userHeader').addEventListener('click',()=>navigate('user'));
  $('#installNative').addEventListener('click',()=>{if($('#installDialog').open)$('#installDialog').close();tryNativeInstall()});
- $('#install').addEventListener('click',openInstallHelp);
+ $('#install').addEventListener('click',()=>{if(state.install&&!isInstalledPWA())tryNativeInstall();else openInstallHelp()});
  $('#installClose').addEventListener('click',()=>$('#installDialog').close());
  $('#installDone').addEventListener('click',()=>$('#installDialog').close());
 }
 function init(){
-  loadUser();readOld();wire();
+  loadUser();readOld();wire();if(isInstalledPWA())$('#install').hidden=true;
   try{
     // El catàleg s'inclou com a script clàssic i no necessita fetch().
     // Per tant, funciona obrint index.html directament en file:// i també per HTTPS.
@@ -134,7 +146,7 @@ function init(){
     render();
   }
   // Service Worker només quan el navegador admet instal·lació i HTTPS/localhost.
-  if('serviceWorker'in navigator&&(location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1'))navigator.serviceWorker.register('./sw.js').catch(console.warn);
+  if('serviceWorker'in navigator&&(location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1'))navigator.serviceWorker.register('./sw.js',{scope:'./'}).then(reg=>{reg.update().catch(()=>{});}).catch(err=>console.warn('Service Worker:',err));
 }
 init();
 

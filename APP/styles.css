@@ -195,3 +195,8 @@ button:active{transform:scale(.96) !important;filter:brightness(1.15)}
 .install-fallback{border-top:1px solid var(--line);font-size:12px;color:var(--muted);padding-top:12px}
 @media(max-width:760px){.user-header{width:34px;min-width:34px;height:36px;font-size:18px}.topright{gap:3px}.back-header{min-width:32px}.brand{gap:7px}.top{padding:0 9px}.music-controls{gap:3px}}
 @media(max-width:390px){.user-header{width:29px;min-width:29px}.topright{gap:2px}.brand strong{font-size:11px}.brand span{font-size:7px}.install-header{width:30px}.back-header{width:29px;min-width:29px}}
+
+/* v16 - instal·lador universal */
+.install-direct-link{display:inline-block;margin-top:3px;color:#f3cd83;text-decoration:underline;text-underline-offset:3px}
+.install-dialog #installNative:not([hidden]){display:flex;margin:0 0 9px}
+.install-dialog code{font-size:12px;color:#ffe2a5;overflow-wrap:anywhere}

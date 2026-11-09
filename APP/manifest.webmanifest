@@ -4,7 +4,7 @@
   "short_name": "Petit Prince",
   "description": "Checklist mundial d’El Petit Príncep, idiomes i edicions, sense registre",
   "lang": "ca",
-  "start_url": "./",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#102346",
@@ -22,5 +22,12 @@
       "type": "image/png",
       "purpose": "any"
     }
+  ],
+  "display_override": [
+    "standalone"
+  ],
+  "categories": [
+    "books",
+    "entertainment"
   ]
 }

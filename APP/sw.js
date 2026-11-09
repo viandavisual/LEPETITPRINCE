@@ -1,7 +1,35 @@
-const CACHE='lpp-world-v15-01';
-const ASSETS=['./','./index.html','./styles.css','./app.js','./music.js','./manifest.webmanifest','./icons/favicon.png','./icons/favicon.ico','./icons/icon-192.png','./icons/icon-512.png','./assets/banner-principito.webp','./assets/bg-pattern.jpg','./assets/intro-principito.webp','./assets/dog-principito.webp','./assets/fox-dog-principito.webp','./assets/home-title.webp','./assets/cover-missing.webp'];
-self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting())));
-self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('lpp-world-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
-self.addEventListener('fetch',e=>{if(e.request.method!=='GET'||new URL(e.request.url).origin!==self.location.origin)return;const u=new URL(e.request.url);if(u.pathname.endsWith('/catalog.json')){e.respondWith(fetch(e.request).then(r=>{if(r.ok){const copy=r.clone();caches.open(CACHE).then(c=>c.put(e.request,copy))}return r}).catch(()=>caches.match(e.request)));return;}const critical=/\/(index\.html|app\.js|styles\.css|music\.js|catalog-data\.js)$/.test(u.pathname);
-if(critical){e.respondWith(fetch(e.request).then(r=>{if(r.ok){const cp=r.clone();caches.open(CACHE).then(c=>c.put(e.request,cp))}return r}).catch(()=>caches.match(e.request)));return;}
-e.respondWith(caches.match(e.request).then(c=>c||fetch(e.request).then(r=>{if(r.ok){const cp=r.clone();caches.open(CACHE).then(cache=>cache.put(e.request,cp))}return r})));});
+/* Le Petit Prince v16 - registre robust, manté l'abast de /APP/ */
+const CACHE='lpp-world-v16-01';
+const CORE=['./','./index.html','./app.js','./styles.css','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png'];
+const OPTIONAL=['./music.js','./icons/favicon.png','./icons/favicon.ico','./assets/banner-principito.webp','./assets/bg-pattern.jpg','./assets/intro-principito.webp','./assets/dog-principito.webp','./assets/fox-dog-principito.webp','./assets/home-title.webp','./assets/cover-missing.webp','../DATA/catalog-data.js'];
+self.addEventListener('install',event=>event.waitUntil((async()=>{
+ const cache=await caches.open(CACHE);
+ // Els recursos bàsics determinen la instal·lació; el contingut opcional mai no la bloqueja.
+ await cache.addAll(CORE);
+ await Promise.allSettled(OPTIONAL.map(path=>cache.add(path)));
+ await self.skipWaiting();
+})()));
+self.addEventListener('activate',event=>event.waitUntil((async()=>{
+ const names=await caches.keys();
+ await Promise.all(names.filter(x=>x.startsWith('lpp-world-')&&x!==CACHE).map(x=>caches.delete(x)));
+ await self.clients.claim();
+})()));
+self.addEventListener('fetch',event=>{
+ const req=event.request;
+ if(req.method!=='GET')return;
+ const url=new URL(req.url);
+ if(url.origin!==self.location.origin)return;
+ const isCritical=/\/(?:index\.html|app\.js|styles\.css|music\.js|catalog-data\.js|manifest\.webmanifest)$/.test(url.pathname);
+ if(isCritical){event.respondWith((async()=>{
+   const cache=await caches.open(CACHE);
+   try{const response=await fetch(req);if(response.ok)cache.put(req,response.clone()).catch(()=>{});return response}
+   catch(err){return await cache.match(req)||await cache.match('./index.html')||Response.error()}
+ })());return;}
+ event.respondWith((async()=>{
+   const cached=await caches.match(req);if(cached)return cached;
+   try{const response=await fetch(req);if(response.ok&&url.pathname.includes('/APP/')){
+     const cache=await caches.open(CACHE);cache.put(req,response.clone()).catch(()=>{});
+   }return response}
+   catch(err){return Response.error()}
+ })());
+});
