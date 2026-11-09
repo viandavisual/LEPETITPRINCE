@@ -100,11 +100,29 @@ function installationHelp(){
  if(chrome)return '<p><b>Google Chrome · Ordinador</b></p><ol><li>Obre el menú <b>⋮</b>.</li><li>Busca <b>Instal·la la pàgina com a aplicació</b> o la icona d’instal·lació de la barra d’adreces.</li><li>Confirma-ho.</li></ol><p>Si Chrome mostra <b>«Obrir a SUPA KEEP ALIVE»</b>, hi ha un registre d’una altra PWA que pot estar capturant aquesta ruta. Revisa <code>chrome://web-app-internals</code> i les instruccions de la v18 abans d’eliminar cap instal·lació.</p>';
  return '<p>Busca l’opció d’instal·lar l’app al menú del navegador. Si només apareix una drecera, el navegador podria no admetre la instal·lació nativa.</p>';
 }
+function installEnvironment(){
+ const ua=navigator.userAgent;
+ const ios=/iPhone|iPad|iPod/i.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+ const android=/Android/i.test(ua);
+ const chrome=/Chrome|CriOS/i.test(ua)&&!/Edg|OPR|SamsungBrowser|Firefox|FxiOS/i.test(ua);
+ return {ios,android,chrome};
+}
+let princeInstallPending=false;
+function syncInstallButton(){
+ const el=$('#install');if(!el)return;
+ el.hidden=isInstalledPWA();
+ el.classList.toggle('install-ready',!!state.install&&!isInstalledPWA());
+ el.title=state.install?'Instal·lació nativa disponible':'Obrir assistent d’instal·lació';
+}
 function openInstallHelp(){
  const help=$('#installHelp');
- help.innerHTML=installationHelp()+'<p class="install-fallback">Si el navegador no permet instal·lar-la, pots continuar utilitzant-la directament des del navegador.</p>';
+ const env=installEnvironment();
+ help.innerHTML=installationHelp()
+  +(env.android&&env.chrome?'<p class="install-extra"><b>Si no apareix «Instal·lar»:</b> obre Chrome directament, no des de WhatsApp o una altra app; comprova que Chrome i els serveis de Google estan actualitzats i que no hi ha cap instal·lació anterior de Prince. El sistema Android decideix si ofereix WebAPK. Aquest botó no el pot forçar.</p>':'')
+  +'<p class="install-fallback">Si no hi ha instal·lació disponible, pots continuar utilitzant l’app des del navegador.</p>';
  const btn=$('#installNative');
  btn.hidden=!(state.install&&!isInstalledPWA());
+ $('#installRecheck').hidden=!(env.android||env.chrome);
  if(!$('#installDialog').open)$('#installDialog').showModal();
 }
 async function tryNativeInstall(){
@@ -114,22 +132,39 @@ async function tryNativeInstall(){
  try{
   await event.prompt();
   const choice=await event.userChoice;
-  if(choice?.outcome==='accepted')toast('Has acceptat instal·lar l’app');
+  if(choice?.outcome==='accepted')toast('Instal·lació acceptada; comprova la pantalla d’inici');
   else toast('Instal·lació cancel·lada');
  }catch(err){console.warn('PWA install prompt:',err);openInstallHelp()}
 }
 
-function wire(){document.addEventListener('click',e=>{const t=e.target.closest('[data-view],[data-lang],[data-book],[data-mark],[data-close],[data-save],#export,#importBackup,#saveUserName');if(!t)return;if(t.dataset.view){navigate(t.dataset.view);return}if(t.dataset.lang){state.languageId=t.dataset.lang;navigate('language');return}if(t.dataset.book){showBook(t.dataset.book);return}if(t.dataset.mark){mark(t.dataset.id,t.dataset.mark);return}if('close'in t.dataset){$('#editionDialog').close();return}if(t.dataset.save){saveNote(t.dataset.save);return}if(t.id==='saveUserName'){saveProfile();return}if(t.id==='export'){exportBackup();return}if(t.id==='importBackup'){$('#backupFile').click();return}});document.addEventListener('input',e=>{if(e.target.id==='search'){const caret=e.target.selectionStart;state.search=e.target.value;render();const x=$('#search');if(x){x.focus();x.setSelectionRange(caret,caret)}}});document.addEventListener('change',async e=>{if(e.target.id==='filter'){state.filter=e.target.value;render()}if(e.target.id==='sort'){state.order=e.target.value;render()}if(e.target.id==='backupFile'){try{await importBackup(e.target.files[0])}catch(err){toast('Error: '+err.message)}e.target.value=''}});window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();state.install=e;if($('#installDialog')?.open)$('#installNative').hidden=false});
- window.addEventListener('appinstalled',()=>{state.install=null;$('#install').hidden=true;if($('#installDialog')?.open)$('#installDialog').close();toast('App instal·lada!')});
+function wire(){document.addEventListener('click',e=>{const t=e.target.closest('[data-view],[data-lang],[data-book],[data-mark],[data-close],[data-save],#export,#importBackup,#saveUserName');if(!t)return;if(t.dataset.view){navigate(t.dataset.view);return}if(t.dataset.lang){state.languageId=t.dataset.lang;navigate('language');return}if(t.dataset.book){showBook(t.dataset.book);return}if(t.dataset.mark){mark(t.dataset.id,t.dataset.mark);return}if('close'in t.dataset){$('#editionDialog').close();return}if(t.dataset.save){saveNote(t.dataset.save);return}if(t.id==='saveUserName'){saveProfile();return}if(t.id==='export'){exportBackup();return}if(t.id==='importBackup'){$('#backupFile').click();return}});document.addEventListener('input',e=>{if(e.target.id==='search'){const caret=e.target.selectionStart;state.search=e.target.value;render();const x=$('#search');if(x){x.focus();x.setSelectionRange(caret,caret)}}});document.addEventListener('change',async e=>{if(e.target.id==='filter'){state.filter=e.target.value;render()}if(e.target.id==='sort'){state.order=e.target.value;render()}if(e.target.id==='backupFile'){try{await importBackup(e.target.files[0])}catch(err){toast('Error: '+err.message)}e.target.value=''}});window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();state.install=e;syncInstallButton();if($('#installDialog')?.open)$('#installNative').hidden=false});
+ window.addEventListener('appinstalled',()=>{state.install=null;syncInstallButton();if($('#installDialog')?.open)$('#installDialog').close();toast('App instal·lada!')});
  $('#headerBack').addEventListener('click',goBack);
  $('#userHeader').addEventListener('click',()=>navigate('user'));
  $('#installNative').addEventListener('click',()=>{if($('#installDialog').open)$('#installDialog').close();tryNativeInstall()});
- $('#install').addEventListener('click',()=>{if(state.install&&!isInstalledPWA())tryNativeInstall();else openInstallHelp()});
+ $('#install').addEventListener('click',()=>{
+  if(isInstalledPWA())return;
+  if(state.install)tryNativeInstall();
+  else openInstallHelp();
+ });
+ $('#installRecheck').addEventListener('click',async()=>{
+  const b=$('#installRecheck');b.disabled=true;b.textContent='COMPROVANT…';
+  try{
+   if('serviceWorker' in navigator){
+    const reg=await navigator.serviceWorker.getRegistration('./');
+    if(reg)await reg.update();
+   }
+   await new Promise(r=>setTimeout(r,850));
+   if(state.install){$('#installDialog').close();tryNativeInstall();}
+   else{toast('Chrome encara no ofereix la instal·lació nativa');openInstallHelp();}
+  }catch(err){console.warn('Install recheck',err);toast('No s’ha pogut comprovar la instal·lació');}
+  finally{b.disabled=false;b.textContent='TORNAR A COMPROVAR';}
+ });
  $('#installClose').addEventListener('click',()=>$('#installDialog').close());
  $('#installDone').addEventListener('click',()=>$('#installDialog').close());
 }
 function init(){
-  loadUser();readOld();wire();if(isInstalledPWA())$('#install').hidden=true;
+  loadUser();readOld();wire();syncInstallButton();
   try{
     // El catàleg s'inclou com a script clàssic i no necessita fetch().
     // Per tant, funciona obrint index.html directament en file:// i també per HTTPS.
