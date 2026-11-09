@@ -1,5 +1,5 @@
-/* Le Petit Prince v17 - registre robust, manté l'abast de /APP/ */
-const CACHE='lpp-world-v17-01';
+/* Le Petit Prince v18 - registre robust, manté l'abast de /APP/ */
+const CACHE='lpp-world-v18-01';
 const CORE=['./','./index.html','./app.js','./styles.css','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png'];
 const OPTIONAL=['./music.js','./icons/favicon.png','./icons/favicon.ico','./assets/banner-principito.webp','./assets/bg-pattern.jpg','./assets/intro-principito.webp','./assets/dog-principito.webp','./assets/fox-dog-principito.webp','./assets/home-title.webp','./assets/cover-missing.webp','../DATA/catalog-data.js'];
 self.addEventListener('install',event=>event.waitUntil((async()=>{
