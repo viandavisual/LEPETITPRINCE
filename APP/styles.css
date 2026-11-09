@@ -210,3 +210,18 @@ button:active{transform:scale(.96) !important;filter:brightness(1.15)}
 .apk-download{display:flex!important;text-decoration:none!important;text-align:center;margin:12px 0 8px;min-height:50px;align-items:center;justify-content:center;}
 .apk-download[hidden]{display:none!important;}
 .install-dialog .install-extra{line-height:1.5;}
+
+/* v21: Android WebView - zona segura superior, sense alterar Chrome/desktop/iOS */
+html.android-webview .top{
+ box-sizing:border-box;
+ height:auto;
+ min-height:calc(69px + 30px + env(safe-area-inset-top,0px));
+ padding-top:calc(30px + env(safe-area-inset-top,0px));
+ padding-bottom:7px;
+ align-items:center;
+}
+@media(min-width:761px){
+ html.android-webview .top{min-height:calc(82px + 30px + env(safe-area-inset-top,0px))}
+}
+/* El header no pot quedar per sota de les icones del sistema en WebView. */
+html.android-webview .shell{scroll-padding-top:calc(100px + env(safe-area-inset-top,0px))}

@@ -5,7 +5,16 @@ const SOURCE='https://www.petit-princep.cat/collection';
 const DATA_KEY='lpp-world-v6-user', OLD_V5='lpp-world-v5-data',OLD_V3='lpp-world-v3-data';
 const state={page:'home',languageId:null,search:'',filter:'all',order:'covers',languages:[],books:[],marks:{},notes:{},install:null,error:'',history:[],homeSelection:[],lastHomeSelection:[]};
 function toast(msg){const t=$('#toast');if(!t)return;t.textContent=msg;t.classList.add('show');clearTimeout(toast.tm);toast.tm=setTimeout(()=>t.classList.remove('show'),3200)}
-function save(){try{localStorage.setItem(DATA_KEY,JSON.stringify({marks:state.marks,notes:state.notes}))}catch(e){toast('No s’han pogut guardar les marques')}}
+// Format local estable: el mateix DATA_KEY de v20 garanteix compatibilitat.
+// userVault es podrà importar/fusionar quan afegim autenticació, sense eliminar el local.
+function save(){
+ try{
+  const old=JSON.parse(localStorage.getItem(DATA_KEY)||'{}')||{};
+  const vault={...old,version:21,marks:state.marks,notes:state.notes,updatedAt:new Date().toISOString()};
+  localStorage.setItem(DATA_KEY,JSON.stringify(vault));
+  return true;
+ }catch(e){console.warn('Error desant el progrés',e);toast('No s’han pogut guardar les marques');return false;}
+}
 function loadUser(){try{const d=JSON.parse(localStorage.getItem(DATA_KEY)||'{}');state.marks=d.marks||{};state.notes=d.notes||{}}catch{}}
 function readOld(){try{if(localStorage.getItem('lpp-v6-migrated'))return;for(const key of [OLD_V5,OLD_V3]){const o=JSON.parse(localStorage.getItem(key)||'null');if(!o?.marks)continue; // Old entries have different identities: retain them in backup, not auto-match incorrectly.
   localStorage.setItem('lpp-v6-legacy-available', '1'); break;}localStorage.setItem('lpp-v6-migrated','1')}catch{}}
@@ -36,7 +45,7 @@ function chooseHomeLanguages(){
 }
 function home(){const langs=state.homeSelection.length?state.homeSelection:chooseHomeLanguages();return `<section class="hero hero3 hero11"><div class="hero11-content"><div class="eyebrow">LA TEVA CONSTEL·LACIÓ DE LLIBRES</div><img class="home-title-art" src="assets/home-title.webp" alt="Un llibre. Molts mons." loading="eager"><p>Explora idiomes, contempla portades reals i marca les edicions que tens o les que voldries trobar.</p><button class="primary" data-view="explore">✦ Explorar idiomes →</button></div><div class="hero11-art"><img src="assets/banner-principito.webp" alt="La noia i el Petit Príncep contemplant les estrelles"></div></section><div class="section-head"><h2>El teu univers</h2></div>${statCards()}<div class="quickgrid support home-quickgrid"><button class="quick" data-view="explore"><span class="symbol">◈</span><strong>Idiomes</strong><small>Explorar portades</small></button><button class="quick" data-view="owned"><span class="symbol">✓</span><strong>Col·lecció</strong><small>Les teves edicions</small></button><button class="quick" data-view="wishes"><span class="symbol">♡</span><strong>Desitjats</strong><small>La llista de desitjos</small></button></div><div class="section-head"><h2>Portades de la col·lecció</h2><button class="ghost" data-view="explore">Veure idiomes →</button></div><div class="catalog-grid lang-grid">${langs.map(langCard).join('')}</div><div class="home-fox-dog" aria-hidden="true"><img src="assets/fox-dog-principito.webp" loading="lazy" alt=""></div>`}
 function explore(){let langs=[...state.languages];if(state.search.trim())langs=langs.filter(l=>norm(l.name).includes(norm(state.search)));if(state.filter==='owned')langs=langs.filter(l=>ownedLanguages().has(l.id));if(state.filter==='covers')langs=langs.filter(l=>!!representative(l));if(state.order==='az')langs.sort((a,b)=>a.name.localeCompare(b.name,'ca'));else if(state.order==='num')langs.sort((a,b)=>b.count-a.count);else langs.sort((a,b)=>Number(!!representative(b))-Number(!!representative(a))||a.name.localeCompare(b.name,'ca'));return `<div class="eyebrow">CATÀLEG VISUAL</div><h1 class="introtitle">Idiomes i dialectes</h1><p class="subtle">Una portada per idioma: la més recent disponible a les fitxes del catàleg local.</p><div class="catalog-summary"><span><strong>${langs.length}</strong> idiomes visibles</span><span><strong>${state.languages.length}</strong> idiomes carregats</span><span><strong>${state.books.length}</strong> edicions precarregades</span></div><div class="toolbar"><div class="searchbox"><input id="search" placeholder="Cercar idioma…" value="${esc(state.search)}"></div><select id="filter"><option value="all" ${state.filter==='all'?'selected':''}>Tots</option><option value="covers" ${state.filter==='covers'?'selected':''}>Amb portada</option><option value="owned" ${state.filter==='owned'?'selected':''}>Els que tinc</option></select><select id="sort"><option value="covers" ${state.order==='covers'?'selected':''}>Portades primer</option><option value="az" ${state.order==='az'?'selected':''}>A–Z</option><option value="num" ${state.order==='num'?'selected':''}>Més edicions</option></select></div>${langs.length?`<div class="catalog-grid lang-grid">${langs.map(langCard).join('')}</div>`:`<div class="no-result">No hi ha idiomes que coincideixin amb la cerca.</div>`}`}
-function languagePage(){const lang=state.languages.find(x=>x.id===state.languageId);if(!lang)return explore();const editions=langBooks(lang.id).sort((a,b)=>(parseInt(b.year)||0)-(parseInt(a.year)||0));const owned=editions.filter(b=>state.marks[b.id]?.owned).length;return `<div class="backline"><button class="ghost" data-view="explore">← Tots els idiomes</button></div><div class="eyebrow">IDIOMA</div><div class="ed-head"><h1>${esc(lang.name)}</h1><div class="count-pill">${owned} que tinc</div></div><p class="subtle">${lang.count} registres a la font · ${editions.length} incorporats al catàleg</p><div class="linkbar"><a href="${esc(lang.sourceUrl)}" target="_blank" rel="noopener">Consulta totes les edicions a la font original ↗</a></div><div class="catalog-grid">${editions.map(bookCard).join('')}</div>`}
+function languagePage(){const lang=state.languages.find(x=>x.id===state.languageId);if(!lang)return explore();const editions=langBooks(lang.id).sort((a,b)=>(parseInt(b.year)||0)-(parseInt(a.year)||0));const owned=editions.filter(b=>state.marks[b.id]?.owned).length;return `<div class="backline"><button class="ghost" data-back-list="1">← Tots els idiomes</button></div><div class="eyebrow">IDIOMA</div><div class="ed-head"><h1>${esc(lang.name)}</h1><div class="count-pill">${owned} que tinc</div></div><p class="subtle">${lang.count} registres a la font · ${editions.length} incorporats al catàleg</p><div class="linkbar"><a href="${esc(lang.sourceUrl)}" target="_blank" rel="noopener">Consulta totes les edicions a la font original ↗</a></div><div class="catalog-grid">${editions.map(bookCard).join('')}</div>`}
 function owned(){const b=allOwned();return `<div class="eyebrow">COL·LECCIÓ</div><h1 class="introtitle">${b.length} edicions que tinc</h1><p class="subtle">${ownedLanguages().size} idiomes amb almenys una edició marcada.</p>${b.length?`<div class="catalog-grid">${b.map(bookCard).join('')}</div>`:`<div class="empty">Encara no has marcat cap edició.</div>`}`}
 function wishes(){const b=allWanted();return `<div class="eyebrow">DESITJATS</div><h1 class="introtitle">${b.length} edicions desitjades</h1>${b.length?`<div class="catalog-grid">${b.map(bookCard).join('')}</div>`:`<div class="empty">La teva llista de desitjats és buida.</div>`}`}
 function stats(){return `<div class="eyebrow">ESTADÍSTIQUES</div><h1 class="introtitle">La teva col·lecció</h1>${statCards()}<div class="stats-dog" aria-hidden="true"><img src="assets/dog-principito.webp" loading="lazy" alt=""></div>`}
@@ -58,28 +67,67 @@ function render(){const html=state.error?`<section class="hero hero3"><div><div 
 function showBook(id){const b=state.books.find(x=>x.id===id);if(!b)return;const m=state.marks[id]||{}, n=state.notes[id]||{};$('#dialogContent').innerHTML=`<div class="modal-head"><div><div class="eyebrow">FITXA D’EDICIÓ</div><h2>${esc(b.title)}</h2><div class="subtle">${esc(state.languages.find(x=>x.id===b.languageId)?.name||'')}</div></div><button class="close" data-close aria-label="Tancar">×</button></div><div class="detailgrid"><div>${image(b.cover,b.title)}</div><div><dl class="metadata"><dt>Any</dt><dd>${esc(b.year||'—')}</dd><dt>Editorial</dt><dd>${esc(b.publisher||'—')}</dd><dt>ISBN</dt><dd>${esc(b.isbn||'—')}</dd><dt>País</dt><dd>${esc(b.country||'—')}</dd><dt>Traductor</dt><dd>${esc(b.translator||'—')}</dd><dt>Font</dt><dd><a href="${esc(b.sourceUrl)}" target="_blank" rel="noopener">Col·lecció original ↗</a></dd></dl><div class="detail-actions"><button class="mark ${m.owned?'owned':''}" data-mark="owned" data-id="${esc(id)}">✓ Tinc</button><button class="mark ${m.wish?'wish':''}" data-mark="wish" data-id="${esc(id)}">♡ Vull</button></div></div></div><label>Notes personals<textarea id="noteField">${esc(n.note||'')}</textarea></label><div class="detail-actions"><button class="primary" data-save="${esc(id)}">Desar notes</button><button class="ghost" data-close>Tancar</button></div>`;$('#editionDialog').showModal()}
 function mark(id,type){if(!state.books.find(x=>x.id===id))return;const mark=state.marks[id]||{};mark[type]=!mark[type];mark.modifiedAt=new Date().toISOString();state.marks[id]=mark;save();if($('#editionDialog').open){$('#editionDialog').close();showBook(id)}render();toast('Col·lecció actualitzada')}
 function saveNote(id){state.notes[id]={note:$('#noteField')?.value||''};save();$('#editionDialog').close();toast('Nota desada')}
-function exportBackup(){const out={format:'le-petit-prince-v6-user',created:new Date().toISOString(),marks:state.marks,notes:state.notes};const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='petit-prince-collection-v13.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),10000)}
-async function importBackup(f){if(!f)return;const d=JSON.parse(await f.text());if(d.format!=='le-petit-prince-v6-user'||!d.marks||!d.notes)throw Error('Format no compatible');if(!confirm('Fusionar aquesta còpia amb les marques i notes actuals?'))return;Object.assign(state.marks,d.marks);Object.assign(state.notes,d.notes);save();render();toast('Còpia incorporada')}
+function exportBackup(){const out={format:'le-petit-prince-v6-user',schemaVersion:21,created:new Date().toISOString(),marks:state.marks,notes:state.notes,profile:loadProfile()};const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='petit-prince-collection-v13.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),10000)}
+async function importBackup(f){if(!f)return;const d=JSON.parse(await f.text());if(d.format!=='le-petit-prince-v6-user'||!d.marks||!d.notes)throw Error('Format no compatible');if(!confirm('Fusionar aquesta còpia amb les marques i notes actuals?'))return;Object.assign(state.marks,d.marks);Object.assign(state.notes,d.notes);if(d.profile?.name&&!loadProfile().name){try{localStorage.setItem(PROFILE_KEY,JSON.stringify(d.profile))}catch{}}save();render();toast('Còpia incorporada')}
 function updateBackButton(){
- const back=$('#headerBack');if(back)back.disabled=state.history.length===0 && state.page==='home';
+ const back=$('#headerBack');
+ if(back)back.disabled=state.history.length===0 && state.page==='home';
 }
-function navigate(page, remember=true){
+// Conservem la pàgina i la posició real abans d'entrar en un idioma.
+// El retorn restaura el mateix scroll, cerca i filtres sense reinicialitzar-los.
+function capturePosition(){
+ const y=window.scrollY||document.documentElement.scrollTop||0;
+ const first=document.elementFromPoint(Math.min(window.innerWidth/2,200),Math.min(window.innerHeight/2,140));
+ const card=first?.closest?.('[data-lang]');
+ return {scrollY:y,anchor:card?.getAttribute('data-lang')||''};
+}
+function restorePosition(position){
+ if(!position)return;
+ const targetY=Number(position.scrollY)||0;
+ const doc=document.documentElement;
+ const old=doc.style.scrollBehavior;
+ doc.style.scrollBehavior='auto';
+ const restore=()=>window.scrollTo({top:Math.max(0,targetY),left:0,behavior:'instant'});
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  restore();
+  // Les imatges lazy tenen contenidors amb alçada estable, però fem una segona passada.
+  setTimeout(()=>{restore();doc.style.scrollBehavior=old;},100);
+ }));
+}
+function navigate(page, remember=true, restore=null){
  if(remember && (page!==state.page || (page==='language' && state.languageId!==state.lastOpenedLanguageId))){
-   state.history.push({page:state.page,languageId:state.lastOpenedLanguageId||null});
-   if(state.history.length>50)state.history.shift();
+  state.history.push({page:state.page,languageId:state.page==='language'?state.languageId:(state.lastOpenedLanguageId||null),position:capturePosition()});
+  if(state.history.length>50)state.history.shift();
  }
  state.page=page;
  if(page==='home')chooseHomeLanguages();
  if(page==='language')state.lastOpenedLanguageId=state.languageId;
- render();updateBackButton();window.scrollTo(0,0);
+ render();updateBackButton();
+ if(restore)restorePosition(restore);else window.scrollTo({top:0,left:0,behavior:'instant'});
 }
 function goBack(){
- if($('#editionDialog')?.open){$('#editionDialog').close();return}
- if($('#installDialog')?.open){$('#installDialog').close();return}
+ if($('#editionDialog')?.open){$('#editionDialog').close();return;}
+ if($('#installDialog')?.open){$('#installDialog').close();return;}
  const prev=state.history.pop();
- if(!prev){if(state.page!=='home')navigate('home',false);return}
- state.languageId=prev.languageId;state.lastOpenedLanguageId=prev.languageId;
- navigate(prev.page,false);
+ if(!prev){if(state.page!=='home')navigate('home',false);return;}
+ state.languageId=prev.languageId;
+ state.lastOpenedLanguageId=prev.languageId;
+ navigate(prev.page,false,prev.position);
+}
+function backToLanguages(){
+ if($('#editionDialog')?.open){$('#editionDialog').close();return;}
+ if(state.page==='language'){
+  // Preferim l'entrada real d'EXPLORAR dins l'historial.
+  let index=-1;for(let i=state.history.length-1;i>=0;i--){if(state.history[i].page==='explore'){index=i;break;}}
+  if(index>=0){
+   const prev=state.history[index];
+   state.history=state.history.slice(0,index);
+   state.languageId=prev.languageId;
+   navigate('explore',false,prev.position);
+   return;
+  }
+ }
+ navigate('explore');
 }
 function isInstalledPWA(){
  return !!(window.matchMedia?.('(display-mode: standalone)').matches||window.navigator.standalone);
@@ -140,7 +188,7 @@ async function tryNativeInstall(){
  }catch(err){console.warn('PWA install prompt:',err);openInstallHelp()}
 }
 
-function wire(){document.addEventListener('click',e=>{const t=e.target.closest('[data-view],[data-lang],[data-book],[data-mark],[data-close],[data-save],#export,#importBackup,#saveUserName');if(!t)return;if(t.dataset.view){navigate(t.dataset.view);return}if(t.dataset.lang){state.languageId=t.dataset.lang;navigate('language');return}if(t.dataset.book){showBook(t.dataset.book);return}if(t.dataset.mark){mark(t.dataset.id,t.dataset.mark);return}if('close'in t.dataset){$('#editionDialog').close();return}if(t.dataset.save){saveNote(t.dataset.save);return}if(t.id==='saveUserName'){saveProfile();return}if(t.id==='export'){exportBackup();return}if(t.id==='importBackup'){$('#backupFile').click();return}});document.addEventListener('input',e=>{if(e.target.id==='search'){const caret=e.target.selectionStart;state.search=e.target.value;render();const x=$('#search');if(x){x.focus();x.setSelectionRange(caret,caret)}}});document.addEventListener('change',async e=>{if(e.target.id==='filter'){state.filter=e.target.value;render()}if(e.target.id==='sort'){state.order=e.target.value;render()}if(e.target.id==='backupFile'){try{await importBackup(e.target.files[0])}catch(err){toast('Error: '+err.message)}e.target.value=''}});window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();state.install=e;syncInstallButton();if($('#installDialog')?.open)$('#installNative').hidden=false});
+function wire(){document.addEventListener('click',e=>{const t=e.target.closest('[data-view],[data-lang],[data-book],[data-mark],[data-close],[data-save],[data-back-list],#export,#importBackup,#saveUserName');if(!t)return;if(t.hasAttribute('data-back-list')){backToLanguages();return}if(t.dataset.view){navigate(t.dataset.view);return}if(t.dataset.lang){state.languageId=t.dataset.lang;navigate('language');return}if(t.dataset.book){showBook(t.dataset.book);return}if(t.dataset.mark){mark(t.dataset.id,t.dataset.mark);return}if('close'in t.dataset){$('#editionDialog').close();return}if(t.dataset.save){saveNote(t.dataset.save);return}if(t.id==='saveUserName'){saveProfile();return}if(t.id==='export'){exportBackup();return}if(t.id==='importBackup'){$('#backupFile').click();return}});document.addEventListener('input',e=>{if(e.target.id==='search'){const caret=e.target.selectionStart;state.search=e.target.value;render();const x=$('#search');if(x){x.focus();x.setSelectionRange(caret,caret)}}});document.addEventListener('change',async e=>{if(e.target.id==='filter'){state.filter=e.target.value;render()}if(e.target.id==='sort'){state.order=e.target.value;render()}if(e.target.id==='backupFile'){try{await importBackup(e.target.files[0])}catch(err){toast('Error: '+err.message)}e.target.value=''}});window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();state.install=e;syncInstallButton();if($('#installDialog')?.open)$('#installNative').hidden=false});
  window.addEventListener('appinstalled',()=>{state.install=null;syncInstallButton();if($('#installDialog')?.open)$('#installDialog').close();toast('App instal·lada!')});
  $('#headerBack').addEventListener('click',goBack);
  $('#userHeader').addEventListener('click',()=>navigate('user'));
@@ -168,6 +216,9 @@ function wire(){document.addEventListener('click',e=>{const t=e.target.closest('
  $('#installDone').addEventListener('click',()=>$('#installDialog').close());
 }
 function init(){
+  // Xiaomi WebView: barra d'estat del sistema pot ocupar la part superior.
+  const ua=navigator.userAgent||'';
+  if(/Android/i.test(ua) && (/\bwv\b/i.test(ua)||/Version\/4\.0.*Chrome/i.test(ua)))document.documentElement.classList.add('android-webview');
   loadUser();readOld();wire();syncInstallButton();
   try{
     // El catàleg s'inclou com a script clàssic i no necessita fetch().
