@@ -1,5 +1,5 @@
 /* Le Petit Prince v18 - registre robust, manté l'abast de /APP/ */
-const CACHE='lpp-world-v19-install';
+const CACHE='lpp-world-v20-apk';
 const CORE=['./','./index.html','./app.js','./styles.css','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png'];
 const OPTIONAL=['./music.js','./icons/favicon.png','./icons/favicon.ico','./assets/banner-principito.webp','./assets/bg-pattern.jpg','./assets/intro-principito.webp','./assets/dog-principito.webp','./assets/fox-dog-principito.webp','./assets/home-title.webp','./assets/cover-missing.webp','../DATA/catalog-data.js'];
 self.addEventListener('install',event=>event.waitUntil((async()=>{
@@ -18,6 +18,7 @@ self.addEventListener('fetch',event=>{
  const req=event.request;
  if(req.method!=='GET')return;
  const url=new URL(req.url);
+ if(url.pathname.endsWith('.apk'))return; // descàrrega Android sempre directa des de GitHub Pages
  if(url.origin!==self.location.origin)return;
  const isCritical=/\/(?:index\.html|app\.js|styles\.css|music\.js|catalog-data\.js|manifest\.webmanifest)$/.test(url.pathname);
  if(isCritical){event.respondWith((async()=>{

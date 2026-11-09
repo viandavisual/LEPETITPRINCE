@@ -93,6 +93,7 @@ function installationHelp(){
  if(isInstalledPWA())return '<p><b>L’app ja està instal·lada.</b> La tens oberta en mode independent.</p>';
  if(location.protocol==='file:')return '<p>Per instal·lar l’app, obre la versió pública HTTPS. Obrir un fitxer local amb doble clic no permet instal·lar-lo.</p>';
  const directLink='<a href="./index.html" class="install-direct-link">Obrir l’adreça de l’app</a>';
+ if(android)return `<p><b>Android · APK disponible</b></p><p>Per instal·lar Le Petit Prince com una aplicació independent, descarrega l’APK amb el botó següent. Després obre el fitxer descarregat i confirma la instal·lació. Si Android ho demana, autoritza aquesta font per instal·lar l’APK.</p><p class="install-extra"><b>Versió de prova:</b> l’APK actual té una signatura de desenvolupament. Caldrà una signatura permanent per a les actualitzacions definitives. Pots continuar utilitzant la PWA al navegador.</p>`;
  if(ios)return `<p><b>iPhone / iPad</b></p><ol><li>${safari?'A Safari, toca':'Obre l’app a Safari i toca'} <b>Compartir</b>.</li><li>Tria <b>Afegir a la pantalla d’inici</b> i confirma-ho.</li></ol>`;
  if(android&&chrome){return `<p><b>Android · Chrome</b></p><ol><li>Obre aquesta app a Chrome (no dins d’una altra app).</li><li>Al menú <b>⋮</b>, tria <b>Instal·lar aplicació</b> si apareix.</li><li>Confirma la instal·lació i obre-la des de la seva icona.</li></ol><p><b>Atenció:</b> si Chrome només ofereix <b>Crear drecera</b>, això no garanteix una PWA instal·lada. Prova d’obrir directament <code>/APP/index.html</code> i actualitza la pàgina. ${directLink}</p>`;}
  if(android)return '<p>Obre aquesta pàgina a Google Chrome i busca l’opció <b>Instal·lar aplicació</b> al menú ⋮. Algunes versions del navegador només ofereixen una drecera.</p>';
@@ -120,6 +121,8 @@ function openInstallHelp(){
  help.innerHTML=installationHelp()
   +(env.android&&env.chrome?'<p class="install-extra"><b>Si no apareix «Instal·lar»:</b> obre Chrome directament, no des de WhatsApp o una altra app; comprova que Chrome i els serveis de Google estan actualitzats i que no hi ha cap instal·lació anterior de Prince. El sistema Android decideix si ofereix WebAPK. Aquest botó no el pot forçar.</p>':'')
   +'<p class="install-fallback">Si no hi ha instal·lació disponible, pots continuar utilitzant l’app des del navegador.</p>';
+ const apk=$('#installApk');
+ if(apk)apk.hidden=!env.android;
  const btn=$('#installNative');
  btn.hidden=!(state.install&&!isInstalledPWA());
  $('#installRecheck').hidden=!(env.android||env.chrome);
@@ -144,7 +147,8 @@ function wire(){document.addEventListener('click',e=>{const t=e.target.closest('
  $('#installNative').addEventListener('click',()=>{if($('#installDialog').open)$('#installDialog').close();tryNativeInstall()});
  $('#install').addEventListener('click',()=>{
   if(isInstalledPWA())return;
-  if(state.install)tryNativeInstall();
+  if(installEnvironment().android)openInstallHelp();
+  else if(state.install)tryNativeInstall();
   else openInstallHelp();
  });
  $('#installRecheck').addEventListener('click',async()=>{

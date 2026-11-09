@@ -205,3 +205,8 @@ button:active{transform:scale(.96) !important;filter:brightness(1.15)}
 .install-dialog #installRecheck:not([hidden]){display:flex;margin:0 0 9px}
 .install-extra{padding:12px;background:#1b3251;border:1px solid #52688a;border-radius:10px;font-size:13px;line-height:1.65}
 .install-header.install-ready{border-color:#efd083;box-shadow:0 0 0 2px #eacb7833}
+
+/* v20: APK Android disponible a l'assistent */
+.apk-download{display:flex!important;text-decoration:none!important;text-align:center;margin:12px 0 8px;min-height:50px;align-items:center;justify-content:center;}
+.apk-download[hidden]{display:none!important;}
+.install-dialog .install-extra{line-height:1.5;}
