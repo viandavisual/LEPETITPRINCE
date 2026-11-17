@@ -1,0 +1,34 @@
+LE PETIT PRINCE — PATCH v22 -> v23
+=======================================
+
+GITHUB PAGES
+1. Puja la carpeta APP/ del patch sobre APP/ del repositori.
+2. NO modifiquis DATA/, música, portades ni fitxers APK existents.
+3. Manté el mateix manifest id i la mateixa clau de localStorage.
+4. Torna a obrir l'app en una finestra nova perquè s'actualitzi el Service Worker.
+
+CANVIS
+- USER integra el resum d'ESTADÍSTIQUES i el gos al final.
+- Desapareix ESTADÍSTIQUES de la barra lateral (HOME continua mostrant el resum habitual).
+- Botó del llistat de la mateixa amplada que les caixes del perfil.
+- La previsualització del PNG es veu sencera a desktop i mobile, sense scroll intern.
+- PNG descarregable via Blob URL en navegadors compatibles.
+- iPhone/iPad: es prioritza el full natiu de compartir un fitxer PNG. També hi ha
+  OBRIR IMATGE PER DESAR-LA i instruccions per mantenir premuda la imatge.
+- Es conserven les 3 columnes i 18 exemplars per pàgina, amb data i hora.
+
+IMPORTANT — APK XIAOMI
+La versió APK WebView existent NO té necessàriament el pont LPPAndroid.savePng.
+Sense actualitzar l'APK, NO es pot garantir cap descàrrega de PNG dins WebView.
+El directori ANDROID_STUDIO_PATCH/ conté MainActivity.java amb el pont Android
+necessari; per a v23 cal integrar-lo al projecte Android Studio ORIGINAL de
+Le Petit Prince, compilar i generar un APK signat amb LA MATEIXA CLAU anterior.
+No modifiquis applicationId / package ni desinstal·lis l'APK actual.
+El build.gradle d'exemple usa versionCode 3: si el teu APK instal·lat ja té un versionCode 3 o superior, incrementa'l abans de compilar.
+Fes còpia JSON del progrés abans d'instal·lar un APK nou.
+La ruta pública de l'APK de GitHub s'haurà d'actualitzar amb el nou binari
+només després de verificar que es pot instal·lar a sobre de l'anterior.
+Si la instal·lació antiga era debug i ara utilitzes una clau release diferent,
+Android no permetrà actualització directa i es podria perdre el progrés.
+
+Aquest patch web no conté la nova APK compilada ni firmada.

@@ -243,3 +243,41 @@ html.android-webview .shell{scroll-padding-top:calc(100px + env(safe-area-inset-
 .list-page-controls span{color:#f4ddb4;font-size:13px;text-align:center}
 .list-footnote{text-align:center;margin:12px 4px 0;line-height:1.6}
 @media(max-width:760px){.list-launch{gap:10px;padding:17px 14px}.list-launch strong{font-size:14px}.list-launch-symbol{font-size:25px}.list-launch-chevron{font-size:30px}.list-dialog{padding:14px}.list-preview-frame{max-height:49dvh}.list-page-controls button{font-size:11px;padding:9px}}
+
+/* v23 — perfil unificat i PNG complet, sense scroll intern */
+.user-content{width:100%;max-width:980px;margin:0 auto}
+.user-content>.panel,.user-content>.list-launch{width:100%;max-width:none;box-sizing:border-box;margin-left:0;margin-right:0}
+.user-content .user-name-panel .settings-actions{align-items:center}
+.user-content .user-name-panel input{flex:1 1 240px;min-width:0}
+.user-content .list-launch{display:flex;width:100%;min-height:112px}
+.user-progress{margin:30px 0 0}
+.profile-section-heading{font:normal clamp(23px,3vw,30px) Georgia,serif;margin:7px 0 18px}
+.user-progress .statgrid{grid-template-columns:repeat(4,minmax(0,1fr))}
+.user-content .stats-dog{padding:28px 0 8px}
+.list-dialog{display:flex;flex-direction:column;gap:0;overflow:hidden;max-height:calc(100dvh - 18px);height:min(92dvh,880px);width:min(740px,calc(100vw - 18px));box-sizing:border-box}
+.list-dialog .modal-head{flex:0 0 auto}
+.list-dialog .modal-head h2{margin:0}
+.list-dialog .modal-head .subtle{margin:3px 0}
+.list-preview-state{flex:0 0 auto;margin:4px 0;min-height:20px}
+.list-dialog .list-preview-frame{flex:1 1 auto;min-height:80px;max-height:none;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:7px}
+.list-dialog .list-preview-frame img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;box-shadow:0 3px 12px #0007}
+.list-dialog .list-page-controls{flex:0 0 auto;margin:8px 0}
+.list-dialog #listDownload{flex:0 0 auto}
+.list-dialog #listOpenImage{margin-top:6px;flex:0 0 auto}
+.list-dialog .list-footnote{flex:0 0 auto;line-height:1.35;margin:8px 0 0;font-size:11px}
+.list-dialog .list-save-help{font-size:12px;line-height:1.4;background:#233956;border-radius:8px;padding:8px 10px;margin:6px 0 0}
+.list-dialog [hidden]{display:none!important}
+@media(max-width:900px){.user-progress .statgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){
+ .list-dialog{height:calc(100dvh - 10px);max-height:calc(100dvh - 10px);padding:12px;border-radius:13px;width:calc(100vw - 10px)}
+ .list-dialog .modal-head h2{font-size:24px}
+ .list-dialog .modal-head .eyebrow{font-size:9px}
+ .list-dialog .list-footnote{font-size:10px}
+ .list-dialog .list-page-controls button{padding:6px 9px}
+ .list-dialog .list-preview-frame{padding:4px}
+ .user-content .user-name-panel .settings-actions{display:grid;grid-template-columns:1fr}
+ .user-content .user-name-panel input{width:100%}
+ .user-progress .statgrid{gap:9px}
+ .user-content .stat strong{font-size:25px}
+}
+.list-dialog:not([open]){display:none!important}

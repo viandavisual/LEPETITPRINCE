@@ -48,25 +48,27 @@ function explore(){let langs=[...state.languages];if(state.search.trim())langs=l
 function languagePage(){const lang=state.languages.find(x=>x.id===state.languageId);if(!lang)return explore();const editions=langBooks(lang.id).sort((a,b)=>(parseInt(b.year)||0)-(parseInt(a.year)||0));const owned=editions.filter(b=>state.marks[b.id]?.owned).length;return `<div class="backline"><button class="ghost" data-back-list="1">← Tots els idiomes</button></div><div class="eyebrow">IDIOMA</div><div class="ed-head"><h1>${esc(lang.name)}</h1><div class="count-pill">${owned} que tinc</div></div><p class="subtle">${lang.count} registres a la font · ${editions.length} incorporats al catàleg</p><div class="linkbar"><a href="${esc(lang.sourceUrl)}" target="_blank" rel="noopener">Consulta totes les edicions a la font original ↗</a></div><div class="catalog-grid">${editions.map(bookCard).join('')}</div>`}
 function owned(){const b=allOwned();return `<div class="eyebrow">COL·LECCIÓ</div><h1 class="introtitle">${b.length} edicions que tinc</h1><p class="subtle">${ownedLanguages().size} idiomes amb almenys una edició marcada.</p>${b.length?`<div class="catalog-grid">${b.map(bookCard).join('')}</div>`:`<div class="empty">Encara no has marcat cap edició.</div>`}`}
 function wishes(){const b=allWanted();return `<div class="eyebrow">DESITJATS</div><h1 class="introtitle">${b.length} edicions desitjades</h1>${b.length?`<div class="catalog-grid">${b.map(bookCard).join('')}</div>`:`<div class="empty">La teva llista de desitjats és buida.</div>`}`}
-function stats(){return `<div class="eyebrow">ESTADÍSTIQUES</div><h1 class="introtitle">La teva col·lecció</h1>${statCards()}<div class="stats-dog" aria-hidden="true"><img src="assets/dog-principito.webp" loading="lazy" alt=""></div>`}
+function stats(){return `<div class="eyebrow">EL MEU PROGRÉS</div><h2 class="profile-section-heading">La teva col·lecció en xifres</h2>${statCards()}`}
 function userPage(){
- const profile=loadProfile();
- const name=esc(profile.name||'Col·leccionista');
- return `<div class="eyebrow">EL MEU UNIVERS</div><h1 class="introtitle">Usuari</h1>
+ const profile=loadProfile(),name=esc(profile.name||'Col·leccionista');
+ return `<div class="user-content"><div class="eyebrow">EL MEU UNIVERS</div><h1 class="introtitle">Usuari</h1>
  <div class="panel user-panel"><div class="user-avatar">✦</div><div class="user-profile"><h3>${name}</h3><p class="subtle">Perfil local · sense necessitat de registre</p></div></div>
- <div class="panel"><h3>El teu nom de col·leccionista</h3><p class="subtle">Aquesta preferència només es desa en aquest dispositiu.</p><div class="settings-actions"><input id="userName" maxlength="60" value="${esc(profile.name||'')}" placeholder="Nom del col·leccionista" aria-label="Nom del col·leccionista"><button class="primary" id="saveUserName">Desar nom</button></div></div>
- <button class="panel list-launch" id="saveOwnedPng" type="button"><span class="list-launch-symbol" aria-hidden="true">✦</span><span><strong>GUARDA EL TEU LLISTAT</strong><small>Una imatge amb les portades de tots els llibres que tens · ${allOwned().length} edicions</small></span><span class="list-launch-chevron" aria-hidden="true">›</span></button>`;
+ <div class="panel user-name-panel"><h3>El teu nom de col·leccionista</h3><p class="subtle">El teu nom i el teu progrés es desen en aquest dispositiu.</p><div class="settings-actions"><input id="userName" maxlength="60" value="${esc(profile.name||'')}" placeholder="Nom del col·leccionista" aria-label="Nom del col·leccionista"><button class="primary" id="saveUserName">Desar nom</button></div></div>
+ <button class="panel list-launch" id="saveOwnedPng" type="button"><span class="list-launch-symbol" aria-hidden="true">✦</span><span><strong>GUARDA EL TEU LLISTAT</strong><small>Còpia visual de les portades dels teus ${allOwned().length} exemplars</small></span><span class="list-launch-chevron" aria-hidden="true">›</span></button>
+ <section class="user-progress"><div class="eyebrow">LES TEVES ESTADÍSTIQUES</div><h2 class="profile-section-heading">El teu progrés</h2>${statCards()}</section>
+ <div class="stats-dog" aria-hidden="true"><img src="assets/dog-principito.webp" loading="lazy" alt=""></div>
+ </div>`;
 }
 const PROFILE_KEY='lpp-world-v15-profile';
 function loadProfile(){try{return JSON.parse(localStorage.getItem(PROFILE_KEY)||'{}')||{}}catch{return {}}}
 function saveProfile(){const el=$('#userName');const name=(el?.value||'').trim().slice(0,60);try{localStorage.setItem(PROFILE_KEY,JSON.stringify({name}))}catch{toast('No s’ha pogut desar el perfil');return}render();toast('Nom desat')}
 
 function settings(){return `<div class="eyebrow">DADES I AJUSTOS</div><h1 class="introtitle">Les teves dades</h1><div class="panel"><h3>Catàleg local (carpeta DATA)</h3><p class="subtle">La v14 llegeix directament <code>../DATA/catalog-data.js</code> i les portades de <code>../DATA/covers/</code>. No cal internet, servidor ni sincronització per carregar-lo. Quan el CAPTURADOR acabi, copia la carpeta DATA al costat d’APP i torna a obrir la PWA.</p>${note()}<p class="subtle">Pots actualitzar DATA en el futur sense esborrar les teves marques i notes personals.</p></div><div class="panel"><h3>Còpia de seguretat de la col·lecció</h3><p class="subtle">Les marques TINC/VULL i les notes es desen en aquest navegador, de manera independent del catàleg.</p><div class="settings-actions"><button class="primary" id="export">Exportar la meva col·lecció</button><button class="secondary" id="importBackup">Importar còpia JSON</button></div></div><div class="panel"><h3>Compatibilitat</h3><p class="subtle">Es mantenen els identificadors d’edició de la v7/v8 quan provenen de petit-princep.cat. Les fonts anteriors amb identificadors diferents no es fusionen automàticament.</p></div><div class="mutedfoot">Projecte no oficial, sense ànim de lucre. Font: <a href="${SOURCE}" target="_blank" rel="noopener">petit-princep.cat</a>.</div>`}
-function render(){const html=state.error?`<section class="hero hero3"><div><div class="eyebrow">LE PETIT PRINCE · WORLD COLLECTION v15</div><h1>El teu univers de llibres</h1><p>La interfície ja està preparada. Només falta copiar les dades del CAPTURADOR.</p></div></section><div class="notice"><b>No s’ha detectat la carpeta DATA completa.</b><p>Assegura’t que hi hagi <code>APP/index.html</code> i <code>DATA/catalog-data.js</code> dins la mateixa carpeta principal. Torna a obrir <code>APP/index.html</code>.</p><small>${esc(state.error)}</small></div>`:({home,explore,language:languagePage,owned,wishes,stats,user:userPage,settings}[state.page]||home)();$('#main').innerHTML=html;document.querySelectorAll('[data-view]').forEach(t=>t.classList.toggle('active',t.dataset.view===state.page))}
+function render(){const html=state.error?`<section class="hero hero3"><div><div class="eyebrow">LE PETIT PRINCE · WORLD COLLECTION v15</div><h1>El teu univers de llibres</h1><p>La interfície ja està preparada. Només falta copiar les dades del CAPTURADOR.</p></div></section><div class="notice"><b>No s’ha detectat la carpeta DATA completa.</b><p>Assegura’t que hi hagi <code>APP/index.html</code> i <code>DATA/catalog-data.js</code> dins la mateixa carpeta principal. Torna a obrir <code>APP/index.html</code>.</p><small>${esc(state.error)}</small></div>`:({home,explore,language:languagePage,owned,wishes,stats:userPage,user:userPage,settings}[state.page]||home)();$('#main').innerHTML=html;document.querySelectorAll('[data-view]').forEach(t=>t.classList.toggle('active',t.dataset.view===state.page))}
 function showBook(id){const b=state.books.find(x=>x.id===id);if(!b)return;const m=state.marks[id]||{}, n=state.notes[id]||{};$('#dialogContent').innerHTML=`<div class="modal-head"><div><div class="eyebrow">FITXA D’EDICIÓ</div><h2>${esc(b.title)}</h2><div class="subtle">${esc(state.languages.find(x=>x.id===b.languageId)?.name||'')}</div></div><button class="close" data-close aria-label="Tancar">×</button></div><div class="detailgrid"><div>${image(b.cover,b.title)}</div><div><dl class="metadata"><dt>Any</dt><dd>${esc(b.year||'—')}</dd><dt>Editorial</dt><dd>${esc(b.publisher||'—')}</dd><dt>ISBN</dt><dd>${esc(b.isbn||'—')}</dd><dt>País</dt><dd>${esc(b.country||'—')}</dd><dt>Traductor</dt><dd>${esc(b.translator||'—')}</dd><dt>Font</dt><dd><a href="${esc(b.sourceUrl)}" target="_blank" rel="noopener">Col·lecció original ↗</a></dd></dl><div class="detail-actions"><button class="mark ${m.owned?'owned':''}" data-mark="owned" data-id="${esc(id)}">✓ Tinc</button><button class="mark ${m.wish?'wish':''}" data-mark="wish" data-id="${esc(id)}">♡ Vull</button></div></div></div><label>Notes personals<textarea id="noteField">${esc(n.note||'')}</textarea></label><div class="detail-actions"><button class="primary" data-save="${esc(id)}">Desar notes</button><button class="ghost" data-close>Tancar</button></div>`;$('#editionDialog').showModal()}
 function mark(id,type){if(!state.books.find(x=>x.id===id))return;const mark=state.marks[id]||{};mark[type]=!mark[type];mark.modifiedAt=new Date().toISOString();state.marks[id]=mark;save();if($('#editionDialog').open){$('#editionDialog').close();showBook(id)}render();toast('Col·lecció actualitzada')}
 function saveNote(id){state.notes[id]={note:$('#noteField')?.value||''};save();$('#editionDialog').close();toast('Nota desada')}
-function exportBackup(){const out={format:'le-petit-prince-v6-user',schemaVersion:21,created:new Date().toISOString(),marks:state.marks,notes:state.notes,profile:loadProfile()};const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='petit-prince-collection-v13.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),10000)}
+function exportBackup(){const out={format:'le-petit-prince-v6-user',schemaVersion:23,created:new Date().toISOString(),marks:state.marks,notes:state.notes,profile:loadProfile()};const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='petit-prince-collection-v13.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),10000)}
 async function importBackup(f){if(!f)return;const d=JSON.parse(await f.text());if(d.format!=='le-petit-prince-v6-user'||!d.marks||!d.notes)throw Error('Format no compatible');if(!confirm('Fusionar aquesta còpia amb les marques i notes actuals?'))return;Object.assign(state.marks,d.marks);Object.assign(state.notes,d.notes);if(d.profile?.name&&!loadProfile().name){try{localStorage.setItem(PROFILE_KEY,JSON.stringify(d.profile))}catch{}}save();render();toast('Còpia incorporada')}
 function updateBackButton(){
  const back=$('#headerBack');
@@ -216,6 +218,9 @@ function wire(){document.addEventListener('click',e=>{const t=e.target.closest('
  $('#listPrev').addEventListener('click',()=>showListPage(listExport.page-1));
  $('#listNext').addEventListener('click',()=>showListPage(listExport.page+1));
  $('#listDownload').addEventListener('click',downloadListPage);
+ $('#listOpenImage').addEventListener('click',openListImage);
+ if(isAndroidWebView() && !window.LPPAndroid){$('#listAndroidHelp').hidden=false;}
+ if(isIosDevice()){$('#listOpenImage').hidden=false;$('#listDownload').textContent='⬇ GUARDAR / COMPARTIR PNG';$('#listIosHelp').hidden=false;}
  $('#listClose').addEventListener('click',()=>$('#listDialog').close());
  $('#listDialog').addEventListener('click',e=>{if(e.target===$('#listDialog'))$('#listDialog').close()});
 }
@@ -244,7 +249,7 @@ function init(){
 }
 /* v22 — còpia visual de les edicions TINC, independent de la sincronització */
 const LIST_PER_PAGE=18;
-const listExport={page:0,pages:[],url:'',busy:false,stamp:null};
+const listExport={page:0,pages:[],url:'',blob:null,blobUrl:'',busy:false,stamp:null,serial:0};
 const listSort=(a,b)=>{
  const la=state.languages.find(l=>l.id===a.languageId)?.name||'';
  const lb=state.languages.find(l=>l.id===b.languageId)?.name||'';
@@ -329,7 +334,7 @@ async function makeListCanvas(books){
 }
 function openListPreview(){
  listExport.pages=listChunk(allOwned().sort(listSort),LIST_PER_PAGE);
- listExport.stamp=new Date();listExport.page=0;listExport.url='';
+ listExport.stamp=new Date();listExport.page=0;listExport.url='';listExport.blob=null; if(listExport.blobUrl){URL.revokeObjectURL(listExport.blobUrl);listExport.blobUrl='';}
  if(!$('#listDialog').open)$('#listDialog').showModal();
  showListPage(0);
 }
@@ -341,60 +346,57 @@ async function showListPage(page){
  $('#listPageLabel').textContent=`Pàgina ${page+1} / ${listExport.pages.length}`;
  try{
   const canvas=await makeListCanvas(listExport.pages[page]);
-  const url=canvas.toDataURL('image/png');
-  listExport.url=url;
-  $('#listPreviewImage').src=url;
+  const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('PNG no disponible')),'image/png'));
+  if(listExport.blobUrl)URL.revokeObjectURL(listExport.blobUrl);
+  listExport.blob=blob;
+  listExport.blobUrl=URL.createObjectURL(blob);
+  listExport.url='';
+  $('#listPreviewImage').src=listExport.blobUrl;
   $('#listStatus').textContent=listExport.pages[page].length?`${listExport.pages[page].length} edicions en aquesta pàgina`:'Encara no tens exemplars marcats. Pots guardar igualment una imatge de la llista buida.';
- }catch(e){console.warn('PNG:',e);listExport.url='';$('#listStatus').textContent='No s’ha pogut crear el PNG. Comprova que les imatges són accessibles.';toast('Error creant el llistat')}
- finally{listExport.busy=false;$('#listDownload').disabled=!listExport.url;$('#listPrev').disabled=page===0;$('#listNext').disabled=page===listExport.pages.length-1;}
+ }catch(e){console.warn('PNG:',e);listExport.blob=null;listExport.url='';$('#listStatus').textContent='No s’ha pogut crear el PNG. Comprova que les imatges són accessibles.';toast('Error creant el llistat')}
+ finally{listExport.busy=false;$('#listDownload').disabled=!listExport.blob;$('#listPrev').disabled=page===0;$('#listNext').disabled=page===listExport.pages.length-1;}
 }
-function downloadListPage(){
- if(!listExport.url)return;
+function isIosDevice(){return /iPhone|iPad|iPod/i.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1)}
+function isAndroidWebView(){const ua=navigator.userAgent||'';return /Android/i.test(ua)&&(/\bwv\b/i.test(ua)||/Version\/4\.0.*Chrome/i.test(ua))}
+function saveListBlobDirect(){
+ if(!listExport.blob)return;
+ const a=document.createElement('a');
+ a.href=listExport.blobUrl;a.download=listFilename();a.style.display='none';
+ document.body.appendChild(a);a.click();a.remove();
+}
+async function downloadListPage(){
+ if(!listExport.blob)return;
  const filename=listFilename();
- // Pont específic per a l'APK WebView actualitzada; evita enllaços data: que WebView no descarrega.
- if(window.LPPAndroid&&typeof window.LPPAndroid.savePng==='function'){
-  try{window.LPPAndroid.savePng(listExport.url,filename);toast('Desant el PNG a Descàrregues…');return}
-  catch(e){console.warn('Android PNG:',e);toast('No s’ha pogut desar a Android');return}
+ // APK actualitzada: el pont natiu desa el PNG a Descàrregues (MediaStore).
+ if(window.LPPAndroid && typeof window.LPPAndroid.savePng==='function'){
+  try{
+   const data=await new Promise((resolve,reject)=>{
+    const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(r.error);r.readAsDataURL(listExport.blob);
+   });
+   window.LPPAndroid.savePng(data,filename);
+   toast('Desant el PNG al Xiaomi…');return;
+  }catch(e){console.warn('PNG Android:',e);toast('No s’ha pogut desar el PNG.');return}
  }
- if(/Android/i.test(navigator.userAgent)&&/\bwv\b|Version\/4\.0.*Chrome/i.test(navigator.userAgent)){
-  toast('Per descarregar el PNG, cal actualitzar l’APK de Le Petit Prince.');return;
+ if(isAndroidWebView()){
+  toast('Cal actualitzar l’APK per descarregar PNG. La web sola no pot activar aquest permís.');
+  return;
  }
- const link=document.createElement('a');link.href=listExport.url;link.download=filename;document.body.appendChild(link);link.click();link.remove();
+ // Safari iOS: el full de compartir admet un PNG com a fitxer i ofereix «Desar imatge»/«Desar a Fitxers».
+ if(isIosDevice() && navigator.share && typeof File!=='undefined'){
+  try{
+   const file=new File([listExport.blob],filename,{type:'image/png'});
+   if(!navigator.canShare || navigator.canShare({files:[file]})){
+    await navigator.share({files:[file],title:'Le Petit Prince · El meu llistat'});
+    return;
+   }
+  }catch(e){if(e?.name==='AbortError')return;console.warn('Safari share:',e)}
+ }
+ saveListBlobDirect();
+ if(isIosDevice())toast('Si no es desa, obre la imatge i mantén-la premuda 2 segons.');
 }
-
-init();
-
-
-/* v10 — transició d'entrada i feedback màgic */
-(function installMagic(){
- const opening=document.getElementById('opening');
- if(opening){
-  const remove=()=>opening.remove();
-  opening.addEventListener('animationend',e=>{if(e.target===opening)remove()},{once:true});
-  // When reduced motion is enabled, don't leave an invisible blocking layer.
-  if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)remove();
-  // An accessibility fallback; the animation is otherwise exactly 2500 ms.
-  setTimeout(remove,2900);
- }
- const reduced=()=>window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
- document.addEventListener('pointerdown',event=>{
-  if(reduced() || event.button>0)return;
-  const t=event.target.closest('button,[data-lang],[data-book]');
-  if(!t || t.disabled || document.getElementById('opening'))return;
-  let x=event.clientX,y=event.clientY;
-  const r=t.getBoundingClientRect();
-  // prevent particles appearing off-screen on keyboard-less synthetic clicks
-  if(!Number.isFinite(x)||!Number.isFinite(y)){x=r.left+r.width/2;y=r.top+r.height/2}
-  const special=t.matches('[data-mark]');
-  const ring=document.createElement('i');ring.className='magic-ring';ring.style.cssText=`left:${x}px;top:${y}px;width:18px;height:18px`;
-  document.body.appendChild(ring);ring.addEventListener('animationend',()=>ring.remove(),{once:true});
-  const count=special?9:5;
-  for(let i=0;i<count;i++){
-   const a=(Math.PI*2*i/count)+Math.random()*.42;
-   const d=(special?32:22)+Math.random()*(special?52:38);
-   const star=document.createElement('i');star.className='magic-star';star.textContent=i%3===0?'✦':i%3===1?'✧':'·';
-   star.style.cssText=`left:${x}px;top:${y}px;--dx:${Math.cos(a)*d}px;--dy:${Math.sin(a)*d}px;--rot:${Math.round(Math.random()*260-130)}deg;--duration:${.48+Math.random()*.27}s;--star-size:${10+Math.random()*11}px`;
-   document.body.appendChild(star);star.addEventListener('animationend',()=>star.remove(),{once:true});
-  }
- },{passive:true});
-})();
+function openListImage(){
+ if(!listExport.blobUrl)return;
+ // Sempre per una pulsació directa: Safari permet mantenir la imatge premuda per desar-la.
+ const w=window.open(listExport.blobUrl,'_blank','noopener');
+ if(!w){toast('Mantén premuda la imatge de la previsualització durant 2 segons per desar-la.');}
+}
