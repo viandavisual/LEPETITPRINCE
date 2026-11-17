@@ -55,8 +55,7 @@ function userPage(){
  return `<div class="eyebrow">EL MEU UNIVERS</div><h1 class="introtitle">Usuari</h1>
  <div class="panel user-panel"><div class="user-avatar">✦</div><div class="user-profile"><h3>${name}</h3><p class="subtle">Perfil local · sense necessitat de registre</p></div></div>
  <div class="panel"><h3>El teu nom de col·leccionista</h3><p class="subtle">Aquesta preferència només es desa en aquest dispositiu.</p><div class="settings-actions"><input id="userName" maxlength="60" value="${esc(profile.name||'')}" placeholder="Nom del col·leccionista" aria-label="Nom del col·leccionista"><button class="primary" id="saveUserName">Desar nom</button></div></div>
- <div class="panel"><h3>La teva col·lecció</h3><p class="subtle">${ownedLanguages().size} idiomes · ${allOwned().length} edicions · ${allWanted().length} desitjades</p><button class="secondary" data-view="owned">Veure la meva col·lecció →</button></div>
- <div class="panel"><h3>Compte i sincronització</h3><p class="subtle">Més endavant incorporarem accés amb correu electrònic o Google i sincronització mitjançant Supabase. Ara com ara, no hi ha cap compte al servidor: el teu progrés es continua desant localment i pots fer-ne una còpia de seguretat a Ajustos.</p><button class="secondary" data-view="settings">Anar a les còpies de seguretat →</button></div>`;
+ <button class="panel list-launch" id="saveOwnedPng" type="button"><span class="list-launch-symbol" aria-hidden="true">✦</span><span><strong>GUARDA EL TEU LLISTAT</strong><small>Una imatge amb les portades de tots els llibres que tens · ${allOwned().length} edicions</small></span><span class="list-launch-chevron" aria-hidden="true">›</span></button>`;
 }
 const PROFILE_KEY='lpp-world-v15-profile';
 function loadProfile(){try{return JSON.parse(localStorage.getItem(PROFILE_KEY)||'{}')||{}}catch{return {}}}
@@ -188,7 +187,7 @@ async function tryNativeInstall(){
  }catch(err){console.warn('PWA install prompt:',err);openInstallHelp()}
 }
 
-function wire(){document.addEventListener('click',e=>{const t=e.target.closest('[data-view],[data-lang],[data-book],[data-mark],[data-close],[data-save],[data-back-list],#export,#importBackup,#saveUserName');if(!t)return;if(t.hasAttribute('data-back-list')){backToLanguages();return}if(t.dataset.view){navigate(t.dataset.view);return}if(t.dataset.lang){state.languageId=t.dataset.lang;navigate('language');return}if(t.dataset.book){showBook(t.dataset.book);return}if(t.dataset.mark){mark(t.dataset.id,t.dataset.mark);return}if('close'in t.dataset){$('#editionDialog').close();return}if(t.dataset.save){saveNote(t.dataset.save);return}if(t.id==='saveUserName'){saveProfile();return}if(t.id==='export'){exportBackup();return}if(t.id==='importBackup'){$('#backupFile').click();return}});document.addEventListener('input',e=>{if(e.target.id==='search'){const caret=e.target.selectionStart;state.search=e.target.value;render();const x=$('#search');if(x){x.focus();x.setSelectionRange(caret,caret)}}});document.addEventListener('change',async e=>{if(e.target.id==='filter'){state.filter=e.target.value;render()}if(e.target.id==='sort'){state.order=e.target.value;render()}if(e.target.id==='backupFile'){try{await importBackup(e.target.files[0])}catch(err){toast('Error: '+err.message)}e.target.value=''}});window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();state.install=e;syncInstallButton();if($('#installDialog')?.open)$('#installNative').hidden=false});
+function wire(){document.addEventListener('click',e=>{const t=e.target.closest('[data-view],[data-lang],[data-book],[data-mark],[data-close],[data-save],[data-back-list],#export,#importBackup,#saveUserName,#saveOwnedPng');if(!t)return;if(t.hasAttribute('data-back-list')){backToLanguages();return}if(t.dataset.view){navigate(t.dataset.view);return}if(t.dataset.lang){state.languageId=t.dataset.lang;navigate('language');return}if(t.dataset.book){showBook(t.dataset.book);return}if(t.dataset.mark){mark(t.dataset.id,t.dataset.mark);return}if('close'in t.dataset){$('#editionDialog').close();return}if(t.dataset.save){saveNote(t.dataset.save);return}if(t.id==='saveUserName'){saveProfile();return}if(t.id==='saveOwnedPng'){openListPreview();return}if(t.id==='export'){exportBackup();return}if(t.id==='importBackup'){$('#backupFile').click();return}});document.addEventListener('input',e=>{if(e.target.id==='search'){const caret=e.target.selectionStart;state.search=e.target.value;render();const x=$('#search');if(x){x.focus();x.setSelectionRange(caret,caret)}}});document.addEventListener('change',async e=>{if(e.target.id==='filter'){state.filter=e.target.value;render()}if(e.target.id==='sort'){state.order=e.target.value;render()}if(e.target.id==='backupFile'){try{await importBackup(e.target.files[0])}catch(err){toast('Error: '+err.message)}e.target.value=''}});window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();state.install=e;syncInstallButton();if($('#installDialog')?.open)$('#installNative').hidden=false});
  window.addEventListener('appinstalled',()=>{state.install=null;syncInstallButton();if($('#installDialog')?.open)$('#installDialog').close();toast('App instal·lada!')});
  $('#headerBack').addEventListener('click',goBack);
  $('#userHeader').addEventListener('click',()=>navigate('user'));
@@ -214,6 +213,11 @@ function wire(){document.addEventListener('click',e=>{const t=e.target.closest('
  });
  $('#installClose').addEventListener('click',()=>$('#installDialog').close());
  $('#installDone').addEventListener('click',()=>$('#installDialog').close());
+ $('#listPrev').addEventListener('click',()=>showListPage(listExport.page-1));
+ $('#listNext').addEventListener('click',()=>showListPage(listExport.page+1));
+ $('#listDownload').addEventListener('click',downloadListPage);
+ $('#listClose').addEventListener('click',()=>$('#listDialog').close());
+ $('#listDialog').addEventListener('click',e=>{if(e.target===$('#listDialog'))$('#listDialog').close()});
 }
 function init(){
   // Xiaomi WebView: barra d'estat del sistema pot ocupar la part superior.
@@ -238,6 +242,126 @@ function init(){
   // Service Worker només quan el navegador admet instal·lació i HTTPS/localhost.
   if('serviceWorker'in navigator&&(location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1'))navigator.serviceWorker.register('./sw.js',{scope:'./'}).then(reg=>{reg.update().catch(()=>{});}).catch(err=>console.warn('Service Worker:',err));
 }
+/* v22 — còpia visual de les edicions TINC, independent de la sincronització */
+const LIST_PER_PAGE=18;
+const listExport={page:0,pages:[],url:'',busy:false,stamp:null};
+const listSort=(a,b)=>{
+ const la=state.languages.find(l=>l.id===a.languageId)?.name||'';
+ const lb=state.languages.find(l=>l.id===b.languageId)?.name||'';
+ return la.localeCompare(lb,'ca')||(Number(b.year)||0)-(Number(a.year)||0)||String(a.id).localeCompare(String(b.id));
+};
+function listChunk(books,n){const chunks=[];for(let i=0;i<books.length;i+=n)chunks.push(books.slice(i,i+n));return chunks.length?chunks:[[]]}
+function listDate(d){return new Intl.DateTimeFormat('ca-ES',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}).format(d)}
+function listFilename(){const pad=n=>String(n).padStart(2,'0'); const d=listExport.stamp||new Date();return `LE_PETIT_PRINCE_TINC_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_P${pad(listExport.page+1)}-DE-${pad(listExport.pages.length)}.png`}
+function roundPath(ctx,x,y,w,h,r){r=Math.min(r,w/2,h/2);ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
+function rect(ctx,x,y,w,h,r,fill){roundPath(ctx,x,y,w,h,r);ctx.fillStyle=fill;ctx.fill()}
+function fitText(ctx,text,x,y,maxWidth,size,{min=13,font='Arial',color='#f6eedc',weight='600',align='center'}={}){
+ const s=String(text||'—');ctx.textAlign=align;ctx.textBaseline='middle';ctx.fillStyle=color;
+ let n=size;do{ctx.font=`${weight} ${n}px ${font}`;if(ctx.measureText(s).width<=maxWidth||n<=min)break;n-=1}while(n>min);
+ if(ctx.measureText(s).width>maxWidth){let t=s;while(t.length>2&&ctx.measureText(t+'…').width>maxWidth)t=t.slice(0,-1);ctx.fillText(t+'…',x,y)}else ctx.fillText(s,x,y);
+}
+function loadImageForCanvas(src,timeoutMs=5000){return new Promise(resolve=>{
+  if(!src){resolve(null);return}
+  const im=new Image();im.crossOrigin='anonymous';let done=false;
+  const finish=v=>{if(done)return;done=true;clearTimeout(timer);resolve(v)};
+  const timer=setTimeout(()=>finish(null),timeoutMs);
+  im.onload=()=>finish(im);im.onerror=()=>finish(null);
+  im.src=src;
+ })}
+async function loadCoverAsDataUrl(src){
+ if(!src)return null;
+ try{
+  const url=new URL(src,location.href);
+  if(url.origin!==location.origin&&location.protocol!=='file:')return null;
+  if(location.protocol!=='file:'){
+   const res=await fetch(url.href,{mode:'same-origin',credentials:'same-origin'});
+   if(!res.ok) return null;
+   const blob=await res.blob();if(!blob.type.startsWith('image/')||blob.size>10*1024*1024)return null;
+   const reader=new FileReader();
+   const data=await new Promise((ok,fail)=>{reader.onload=()=>ok(reader.result);reader.onerror=fail;reader.readAsDataURL(blob)});
+   return loadImageForCanvas(data);
+  }
+  return loadImageForCanvas(src);
+ }catch{return null}
+}
+function drawContain(ctx,im,x,y,w,h){const scale=Math.min(w/im.naturalWidth,h/im.naturalHeight);const nw=im.naturalWidth*scale,nh=im.naturalHeight*scale;ctx.drawImage(im,x+(w-nw)/2,y+(h-nh)/2,nw,nh)}
+async function makeListCanvas(books){
+ const W=1080, margin=53, gap=21, cardW=(W-margin*2-gap*2)/3, rows=Math.max(1,Math.ceil(books.length/3));
+ const rowH=374,top=344,footer=162,H=top+rows*rowH+footer;
+ const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
+ const ctx=canvas.getContext('2d');if(!ctx)throw Error('Canvas no disponible');
+ ctx.fillStyle='#0b1934';ctx.fillRect(0,0,W,H);
+ const art=window.LPP_LIST_ART||{};
+ const [bg,icon,...covers]=await Promise.all([
+  loadImageForCanvas(art.bg),loadImageForCanvas(art.icon),
+  ...books.map(b=>loadCoverAsDataUrl(b.cover))
+ ]);
+ if(bg){const p=ctx.createPattern(bg,'repeat');if(p){ctx.save();ctx.globalAlpha=.23;ctx.fillStyle=p;ctx.fillRect(0,0,W,H);ctx.restore()}}
+ ctx.fillStyle='rgba(6,16,37,.60)';ctx.fillRect(0,0,W,H);
+ if(icon)drawContain(ctx,icon,70,43,110,110);
+ fitText(ctx,'LE PETIT PRINCE',198,85,790,49,{min:35,font:'Georgia',color:'#f6e3af',weight:'bold',align:'left'});
+ fitText(ctx,'WORLD COLLECTION  ·  EL MEU LLISTAT',200,127,780,21,{font:'Arial',color:'#dcc88e',weight:'700',align:'left'});
+ ctx.fillStyle='#eed19a';ctx.fillRect(margin,173,W-margin*2,3);
+ fitText(ctx,'EXEMPLARS QUE TINC',W/2,228,900,39,{min:26,color:'#fff2cf',weight:'bold'});
+ fitText(ctx,`${allOwned().length} edicions  ·  ${ownedLanguages().size} idiomes  ·  Pàgina ${listExport.page+1} de ${listExport.pages.length}`,W/2,279,970,23,{min:17,color:'#d8dfef',weight:'500'});
+ for(let i=0;i<books.length;i++){
+  const b=books[i],col=i%3,row=Math.floor(i/3),x=margin+col*(cardW+gap),y=top+row*rowH;
+  rect(ctx,x,y,cardW,355,16,'rgba(19,35,64,.96)');
+  ctx.strokeStyle='rgba(236,207,144,.55)';ctx.lineWidth=1.5;roundPath(ctx,x,y,cardW,355,16);ctx.stroke();
+  rect(ctx,x+11,y+10,cardW-22,258,10,'#243753');
+  const cover=covers[i];
+  if(cover){ctx.save();roundPath(ctx,x+12,y+11,cardW-24,256,9);ctx.clip();drawContain(ctx,cover,x+15,y+13,cardW-30,252);ctx.restore()}
+  else{
+   fitText(ctx,'✦',x+cardW/2,y+105,cardW-30,66,{color:'#edce84'});
+   fitText(ctx,'SENSE PORTADA',x+cardW/2,y+174,cardW-32,18,{min:13,color:'#d3dced'});
+  }
+  const lang=state.languages.find(l=>l.id===b.languageId)?.name||'Idioma no indicat';
+  rect(ctx,x+10,y+277,cardW-20,68,9,'#050b16');
+  fitText(ctx,lang,x+cardW/2,y+292,cardW-30,16,{min:12,color:'#f6d997'});
+  fitText(ctx,b.title||'El Petit Príncep',x+cardW/2,y+315,cardW-30,17,{min:11,color:'#ffffff'});
+  fitText(ctx,`${b.year||'Any —'} · ${b.publisher||'Editorial —'} · ID ${b.id}`,x+cardW/2,y+334,cardW-30,12,{min:10,color:'#c7d1e3',weight:'400'});
+ }
+ ctx.fillStyle='#081226';ctx.fillRect(0,H-footer,W,footer);
+ ctx.fillStyle='#e9c984';ctx.fillRect(margin,H-footer,W-margin*2,2);
+ fitText(ctx,`Desat el ${listDate(listExport.stamp)}`,W/2,H-104,940,24,{color:'#fff2d9',weight:'500'});
+ fitText(ctx,'Còpia visual del teu progrés · Guarda totes les pàgines per consultar-les si perds les marques',W/2,H-62,960,16,{min:12,color:'#adbbd0',weight:'400'});
+ return canvas;
+}
+function openListPreview(){
+ listExport.pages=listChunk(allOwned().sort(listSort),LIST_PER_PAGE);
+ listExport.stamp=new Date();listExport.page=0;listExport.url='';
+ if(!$('#listDialog').open)$('#listDialog').showModal();
+ showListPage(0);
+}
+async function showListPage(page){
+ if(page<0||page>=listExport.pages.length||listExport.busy)return;
+ listExport.page=page;listExport.busy=true;
+ $('#listStatus').textContent='Preparant les portades…';
+ $('#listDownload').disabled=true;$('#listPrev').disabled=true;$('#listNext').disabled=true;
+ $('#listPageLabel').textContent=`Pàgina ${page+1} / ${listExport.pages.length}`;
+ try{
+  const canvas=await makeListCanvas(listExport.pages[page]);
+  const url=canvas.toDataURL('image/png');
+  listExport.url=url;
+  $('#listPreviewImage').src=url;
+  $('#listStatus').textContent=listExport.pages[page].length?`${listExport.pages[page].length} edicions en aquesta pàgina`:'Encara no tens exemplars marcats. Pots guardar igualment una imatge de la llista buida.';
+ }catch(e){console.warn('PNG:',e);listExport.url='';$('#listStatus').textContent='No s’ha pogut crear el PNG. Comprova que les imatges són accessibles.';toast('Error creant el llistat')}
+ finally{listExport.busy=false;$('#listDownload').disabled=!listExport.url;$('#listPrev').disabled=page===0;$('#listNext').disabled=page===listExport.pages.length-1;}
+}
+function downloadListPage(){
+ if(!listExport.url)return;
+ const filename=listFilename();
+ // Pont específic per a l'APK WebView actualitzada; evita enllaços data: que WebView no descarrega.
+ if(window.LPPAndroid&&typeof window.LPPAndroid.savePng==='function'){
+  try{window.LPPAndroid.savePng(listExport.url,filename);toast('Desant el PNG a Descàrregues…');return}
+  catch(e){console.warn('Android PNG:',e);toast('No s’ha pogut desar a Android');return}
+ }
+ if(/Android/i.test(navigator.userAgent)&&/\bwv\b|Version\/4\.0.*Chrome/i.test(navigator.userAgent)){
+  toast('Per descarregar el PNG, cal actualitzar l’APK de Le Petit Prince.');return;
+ }
+ const link=document.createElement('a');link.href=listExport.url;link.download=filename;document.body.appendChild(link);link.click();link.remove();
+}
+
 init();
 
 

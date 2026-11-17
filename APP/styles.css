@@ -225,3 +225,21 @@ html.android-webview .top{
 }
 /* El header no pot quedar per sota de les icones del sistema en WebView. */
 html.android-webview .shell{scroll-padding-top:calc(100px + env(safe-area-inset-top,0px))}
+/* v22 — llistat visual TINC */
+.list-launch{display:flex;align-items:center;justify-content:space-between;gap:18px;width:100%;color:var(--cream);text-align:left;cursor:pointer;border-color:#d7b773!important;background:linear-gradient(115deg,#273d5f,#1a2c4a)!important}
+.list-launch:hover{border-color:#ffe0a6!important;box-shadow:0 0 22px #e9c78338}
+.list-launch>span:nth-child(2){display:grid;gap:5px;flex:1}
+.list-launch strong{font-size:17px;letter-spacing:.7px;color:#ffe1a3}
+.list-launch small{font-size:12px;color:#bcd0e5;font-weight:400}
+.list-launch-symbol{font-size:32px;color:#f2cf84}
+.list-launch-chevron{font-size:38px;color:#f2cf84}
+.list-dialog{max-width:700px;width:min(700px,calc(100vw - 20px));max-height:92dvh;overflow-y:auto}
+.list-dialog .modal-head h2{margin:3px 0;font-family:Georgia,serif}
+.list-preview-state{text-align:center;color:#efdbb1;font-size:12px;min-height:27px;margin:7px 0}
+.list-preview-frame{display:flex;align-items:flex-start;justify-content:center;max-height:51dvh;overflow:auto;border:1px solid #475f82;border-radius:11px;background:#0a1630;padding:9px}
+.list-preview-frame img{width:100%;max-width:470px;height:auto;display:block;object-fit:contain}
+.list-page-controls{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:13px 0}
+.list-page-controls button{padding:9px 12px}
+.list-page-controls span{color:#f4ddb4;font-size:13px;text-align:center}
+.list-footnote{text-align:center;margin:12px 4px 0;line-height:1.6}
+@media(max-width:760px){.list-launch{gap:10px;padding:17px 14px}.list-launch strong{font-size:14px}.list-launch-symbol{font-size:25px}.list-launch-chevron{font-size:30px}.list-dialog{padding:14px}.list-preview-frame{max-height:49dvh}.list-page-controls button{font-size:11px;padding:9px}}

@@ -1,0 +1,27 @@
+LE PETIT PRINCE WORLD COLLECTION — PATCH v21 → v22
+=======================================================
+APLICACIÓ WEB (GITHUB)
+1. Fes una còpia de seguretat de les marques actuals (si ho consideres necessari).
+2. Puja a GitHub els fitxers del directori APP d’aquest ZIP, respectant les rutes.
+3. Substitueix només els fitxers que tenen el mateix nom. No modifiquis DATA ni les músiques.
+4. Obre la versió publicada. A USUARI trobaràs GUARDA EL TEU LLISTAT.
+5. La previsualització mostra només els exemplars TINC, 18 per pàgina (3 columnes × 6 files).
+6. Desa cada pàgina amb DESCARREGAR AQUEST PNG. El fitxer indica el número de pàgina i la data.
+
+IMPORTANT — APK WEBVIEW XIAOMI
+- El patch web funciona al navegador (inclosa la PWA) amb descàrregues PNG natives.
+- Per descarregar des de l'APK WebView, cal incorporar el fitxer ANDROID_STUDIO_PATCH/.../MainActivity.java
+  al projecte Android Studio de Le Petit Prince juntament amb ANDROID_STUDIO_PATCH/app/build.gradle,
+  i compilar/signar una APK nova amb la mateixa clau.
+- La nova versió Java afegeix un pont limitat a la URL de Le Petit Prince, que guarda PNG a Descàrregues.
+- Cal conservar el mateix package ID i signatura per instal·lar sobre l'APK existent sense perdre marques.
+- Si l'APK antiga no disposa d'aquest pont, s'indicarà que cal la versió actualitzada.
+- El PNG és una REFERÈNCIA VISUAL, no restaura automàticament les dades.
+- Els 18 exemplars per pàgina limiten l'altura del canvas per evitar PNG gegants.
+- Les portades locals de DATA es dibuixen a Canvas amb URL del mateix origen; si una imatge no és llegible, es mostra una portada de reserva amb l'ID corresponent.
+
+PROVES SUGGERIDES
+- 0, 1, 18, 19, 36, 37 edicions marcades.
+- Noms llargs, portades absents, data/hora i paginació.
+- A la PWA de Chrome, Safari i a la nova APK WebView.
+- Comprova actualització d'APK sense esborrar el progrés local.
