@@ -218,9 +218,9 @@ function wire(){document.addEventListener('click',e=>{const t=e.target.closest('
  $('#listPrev').addEventListener('click',()=>showListPage(listExport.page-1));
  $('#listNext').addEventListener('click',()=>showListPage(listExport.page+1));
  $('#listDownload').addEventListener('click',downloadListPage);
- $('#listOpenImage').addEventListener('click',openListImage);
- if(isAndroidWebView() && !window.LPPAndroid){$('#listAndroidHelp').hidden=false;}
- if(isIosDevice()){$('#listOpenImage').hidden=false;$('#listDownload').textContent='⬇ GUARDAR / COMPARTIR PNG';$('#listIosHelp').hidden=false;}
+ $('#listOpenImage')?.addEventListener('click',openListImage);
+ if(isAndroidWebView() && !window.LPPAndroid && $('#listAndroidHelp')){$('#listAndroidHelp').hidden=false;}
+ if(isIosDevice()){$('#listOpenImage')?.removeAttribute('hidden');$('#listDownload').textContent='⬇ GUARDAR / COMPARTIR PNG';$('#listIosHelp')?.removeAttribute('hidden');}
  $('#listClose').addEventListener('click',()=>$('#listDialog').close());
  $('#listDialog').addEventListener('click',e=>{if(e.target===$('#listDialog'))$('#listDialog').close()});
 }
@@ -400,3 +400,41 @@ function openListImage(){
  const w=window.open(listExport.blobUrl,'_blank','noopener');
  if(!w){toast('Mantén premuda la imatge de la previsualització durant 2 segons per desar-la.');}
 }
+
+
+// v24 — restauració del bootstrap de la v23 (omès accidentalment).
+init();
+
+/* v10 — transició d'entrada i feedback màgic */
+(function installMagic(){
+ const opening=document.getElementById('opening');
+ if(opening){
+  const remove=()=>opening.remove();
+  opening.addEventListener('animationend',e=>{if(e.target===opening)remove()},{once:true});
+  // When reduced motion is enabled, don't leave an invisible blocking layer.
+  if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)remove();
+  // An accessibility fallback; the animation is otherwise exactly 2500 ms.
+  setTimeout(remove,2900);
+ }
+ const reduced=()=>window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+ document.addEventListener('pointerdown',event=>{
+  if(reduced() || event.button>0)return;
+  const t=event.target.closest('button,[data-lang],[data-book]');
+  if(!t || t.disabled || document.getElementById('opening'))return;
+  let x=event.clientX,y=event.clientY;
+  const r=t.getBoundingClientRect();
+  // prevent particles appearing off-screen on keyboard-less synthetic clicks
+  if(!Number.isFinite(x)||!Number.isFinite(y)){x=r.left+r.width/2;y=r.top+r.height/2}
+  const special=t.matches('[data-mark]');
+  const ring=document.createElement('i');ring.className='magic-ring';ring.style.cssText=`left:${x}px;top:${y}px;width:18px;height:18px`;
+  document.body.appendChild(ring);ring.addEventListener('animationend',()=>ring.remove(),{once:true});
+  const count=special?9:5;
+  for(let i=0;i<count;i++){
+   const a=(Math.PI*2*i/count)+Math.random()*.42;
+   const d=(special?32:22)+Math.random()*(special?52:38);
+   const star=document.createElement('i');star.className='magic-star';star.textContent=i%3===0?'✦':i%3===1?'✧':'·';
+   star.style.cssText=`left:${x}px;top:${y}px;--dx:${Math.cos(a)*d}px;--dy:${Math.sin(a)*d}px;--rot:${Math.round(Math.random()*260-130)}deg;--duration:${.48+Math.random()*.27}s;--star-size:${10+Math.random()*11}px`;
+   document.body.appendChild(star);star.addEventListener('animationend',()=>star.remove(),{once:true});
+  }
+ },{passive:true});
+})();
